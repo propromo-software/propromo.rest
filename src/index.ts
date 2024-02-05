@@ -85,8 +85,14 @@ const app = new Elysia()
           version: '1.0.0',
       },
       tags: [
-        { name: 'url', description: 'endpoints, used' },
-        { name: 'general', description: 'info scopes' }
+        { name: 'github', description: 'used for fetching info from the Github GraphQl API' },
+        { name: 'organization', description: 'organization' },
+        { name: 'projects', description: 'organization or user projects' },
+        { name: 'repositories', description: 'project repositories' },
+        { name: 'milestone', description: 'project milestone' },
+        { name: 'views', description: 'project views' },
+        { name: 'scoped', description: 'enum list can be passed in' },
+        { name: 'types', description: 'type info scopes' }
       ]
     }
   }))

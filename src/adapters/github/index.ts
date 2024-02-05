@@ -49,7 +49,11 @@ export const GITHUB_URL_INPUT_TYPES = new Elysia({ prefix: '/input' })
         })
 
         return scopes;
-    });
+    }, {
+    detail: {
+        description: "",
+        tags: ['github', 'types']
+    }});
 
 export const GITHUB_URL = new Elysia({ prefix: '/url' })
     .group("/orgs/:organization_name/projects/:project_id", (app) => app
@@ -62,7 +66,11 @@ export const GITHUB_URL = new Elysia({ prefix: '/url' })
 
             return JSON.stringify(response, null, 2);
         }, {
-            params: t.Object(GITHUB_ORGANIZATION_PROJECT_PARAMS)
+            params: t.Object(GITHUB_ORGANIZATION_PROJECT_PARAMS),
+            detail: {
+                description: "",
+                tags: ['github', 'projects']
+            }
         })
         .get('/repositories', async ({ params: { organization_name, project_id }, set }) => { // deprecated, use /repositories/by with query `ALL` instead
             const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
@@ -73,7 +81,11 @@ export const GITHUB_URL = new Elysia({ prefix: '/url' })
 
             return JSON.stringify(response, null, 2);
         }, {
-            params: t.Object(GITHUB_ORGANIZATION_PROJECT_PARAMS)
+            params: t.Object(GITHUB_ORGANIZATION_PROJECT_PARAMS),
+            detail: {
+                description: "",
+                tags: ['github', 'repositories']
+            }
         })
         .get('/repositories/scoped', async ({ params: { organization_name, project_id }, query, set }) => {
             const scope_values = query.scope.split(',');
@@ -97,7 +109,11 @@ export const GITHUB_URL = new Elysia({ prefix: '/url' })
             params: t.Object(GITHUB_ORGANIZATION_PROJECT_PARAMS),
             query: t.Object({
                 scope: t.String()
-            })
+            }),
+            detail: {
+                description: "",
+                tags: ['github', 'repositories', 'scoped']
+            }
         })
         .get('/repositories/milestone/:milestone_id', async ({ params: { organization_name, project_id, milestone_id }, query, set }) => {
             const depth_values = query.depth.split(',');
@@ -132,7 +148,11 @@ export const GITHUB_URL = new Elysia({ prefix: '/url' })
             query: t.Object({
                 depth: t.String(),
                 issue_states: t.String(),
-            })
+            }),
+            detail: {
+                description: "",
+                tags: ['github', 'milestone', 'scoped']
+            }
         })
 
         .get('', async ({ params: { organization_name, project_id }, set }) => {
@@ -144,7 +164,11 @@ export const GITHUB_URL = new Elysia({ prefix: '/url' })
 
             return JSON.stringify(response, null, 2);
         }, {
-            params: t.Object(GITHUB_ORGANIZATION_PROJECT_PARAMS)
+            params: t.Object(GITHUB_ORGANIZATION_PROJECT_PARAMS),
+            detail: {
+                description: "",
+                tags: ['github', 'projects']
+            }
         })
         .get('/views/:project_view', async ({ params: { organization_name, project_id, project_view }, set }) => {
             const view  = project_view != "%7Bproject_view%7D" ? validateViewParameter(Number(project_view)) : -1;
@@ -160,8 +184,12 @@ export const GITHUB_URL = new Elysia({ prefix: '/url' })
             params: t.Object({
                 ...GITHUB_ORGANIZATION_PROJECT_PARAMS,
                 project_view: t.Optional(t.String()) // t.Numeric({min: 0})
-            })
-        })
+            }),
+            detail: {
+                description: "`project_view` has to be greater than 0",
+                tags: ['github', 'views']
+            }
+        }),
     );
 
 export const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
@@ -177,7 +205,11 @@ export const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
         }, {
             params: t.Object({
                 organization_name: t.String()
-            })
+            }),
+            detail: {
+                description: "",
+                tags: ['github', 'organization']
+            }
         })
         .group("/repository/:repository_name", (app) => app
             .get('', async (
@@ -193,7 +225,11 @@ export const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
                 params: t.Object({
                     organization_name: t.String(),
                     repository_name: t.String()
-                })
+                }),
+                detail: {
+                    description: "",
+                    tags: ['github', 'organization']
+                }
             })
             .get('/project/:project_name', async (
                 { query, params: { organization_name, repository_name, project_name }, set }) => {
@@ -214,7 +250,11 @@ export const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
                     organization_name: t.String(),
                     repository_name: t.String(),
                     project_name: t.String()
-                })
+                }),
+                detail: {
+                    description: "",
+                    tags: ['github', 'organization']
+                }
             })
         )
     );
