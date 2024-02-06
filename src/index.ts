@@ -25,10 +25,11 @@ const HOME_URLS = {
   }
 } as const;
 
+const DEV_MODE = process?.env?.DEV_MODE === "true";
 const CORS_ORIGINS = [
   HOME_URLS.website.url,
   "https://propromo-d08144c627d3.herokuapp.com",
-  "https://propromo-ts.vercel.app"
+  DEV_MODE ? "http://localhost:5000" : "https://propromo-ts.vercel.app",
 ]
 
 const ROOT = `
