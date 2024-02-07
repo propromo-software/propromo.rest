@@ -48,6 +48,9 @@ const GITHUB_REPOSITORY = function (amount: GRAMMATICAL_NUMBER, owner?: string, 
                     progressPercentage
                     title
                     updatedAt
+                    url
+                    state
+
                     open_issues: issues(first: 50, states: [OPEN]) {
                         totalCount
                         ${issues}
@@ -111,6 +114,8 @@ const GITHUB_PROJECT_REPOSITORIES_SCOPED = function (scopes: GITHUB_REPOSITORY_S
             progressPercentage
             title
             updatedAt
+            url
+            state
 
             ${scopes && scopes.includes(GITHUB_REPOSITORY_SCOPES.ISSUES) ? `
             open_issues: issues(first: 50, states: [OPEN]) {
@@ -393,6 +398,8 @@ export const GITHUB_ORGANIZATION_PROJECT_REPOSITORY_MILESTONES_BY_URL_AND_QUERY 
                             progressPercentage
                             title
                             updatedAt
+                            url
+                            state
                             ` : ""}
 
                             ${return_node_issues ? `
