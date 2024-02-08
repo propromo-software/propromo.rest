@@ -3,7 +3,7 @@ import { cors } from '@elysiajs/cors'; // https://elysiajs.com/plugins/cors.html
 import { html } from '@elysiajs/html'; // https://elysiajs.com/plugins/html.html
 import { swagger } from '@elysiajs/swagger'; // https://elysiajs.com/plugins/swagger
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
-import { GITHUB_URL, GITHUB_ORGANIZATION, GITHUB_URL_INPUT_TYPES } from "./adapters/github";
+import { GITHUB_URL, GITHUB_INFO, GITHUB_URL_INPUT_TYPES } from "./adapters/github";
 
 const SWAGGER_PATH = "/api";
 const HOME_URLS = {
@@ -73,12 +73,12 @@ const app = new Elysia()
   }))
   .group('/github', (app) => app
     .use(GITHUB_URL)
-    .use(GITHUB_ORGANIZATION)
+    .use(GITHUB_INFO)
     .use(GITHUB_URL_INPUT_TYPES)
   )
   .use(swagger({
     path: SWAGGER_PATH,
-    exclude: [...ROOT_PATHS, SWAGGER_PATH],
+    exclude: [...ROOT_PATHS, SWAGGER_PATH, new RegExp("(\/github\/info\/)[A-Za-z\/{_}]*")],
     documentation: {
       info: {
           title: 'Propromo RestAPI Documentation',
@@ -90,7 +90,7 @@ const app = new Elysia()
         { name: 'organization', description: 'organization' },
         { name: 'projects', description: 'organization or user projects' },
         { name: 'repositories', description: 'project repositories' },
-        { name: 'milestone', description: 'project milestone' },
+        { name: 'milestones', description: 'project milestones' },
         { name: 'views', description: 'project views' },
         { name: 'scoped', description: 'enum list can be passed in' },
         { name: 'types', description: 'type info scopes' }

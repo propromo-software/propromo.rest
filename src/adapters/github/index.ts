@@ -32,19 +32,19 @@ export const GITHUB_URL_INPUT_TYPES = new Elysia({ prefix: '/input' })
         scopes.push({
             name: "GITHUB_REPOSITORY_SCOPES",
             description: "repository scopes",
-            endpoint: "/github/url/orgs/{organization_name}/projects/{project_id}/repositories/scoped?scope=<SCOPE>",
+            endpoint: "/github/orgs/{organization_name}/projects/{project_id}/repositories/scoped?scope=<SCOPE>",
             type: Object.values(GITHUB_REPOSITORY_SCOPES)
         });
         scopes.push({
             name: "GITHUB_ORGANIZATION_MILESTONES_DEPTH",
             description: "milestone scopes",
-            endpoint: "/github/url/orgs/{organization_name}/projects/{project_id}/repositories/milestone/{milestone_id}?depth=<DEPTH_1,DEPTH_2>&issue_states=<ISSUE_STATE_1,ISSUE_STATE_2>",
+            endpoint: "/github/orgs/{organization_name}/projects/{project_id}/repositories/milestones/{milestone_id}?depth=<DEPTH_1,DEPTH_2>&issue_states=<ISSUE_STATE_1,ISSUE_STATE_2>",
             type: Object.values(GITHUB_ORGANIZATION_MILESTONES_DEPTH)
         }) 
         scopes.push({
             name: "GITHUB_ORGANIZATION_MILESTONE_ISSUE_STATES",
             description: "issue scopes",
-            endpoint: "/github/url/orgs/{organization_name}/projects/{project_id}/repositories/milestone/{milestone_id}?depth=<DEPTH_1,DEPTH_2>&issue_states=<ISSUE_STATE_1,ISSUE_STATE_2>",
+            endpoint: "/github/orgs/{organization_name}/projects/{project_id}/repositories/milestones/{milestone_id}?depth=<DEPTH_1,DEPTH_2>&issue_states=<ISSUE_STATE_1,ISSUE_STATE_2>",
             type: Object.values(GITHUB_ORGANIZATION_MILESTONE_ISSUE_STATES)
         })
 
@@ -55,8 +55,8 @@ export const GITHUB_URL_INPUT_TYPES = new Elysia({ prefix: '/input' })
         tags: ['github', 'types']
     }});
 
-export const GITHUB_URL = new Elysia({ prefix: '/url' })
-    .group("/orgs/:organization_name/projects/:project_id", (app) => app
+export const GITHUB_URL = new Elysia({ prefix: '/orgs' })
+    .group("/:organization_name/projects/:project_id", (app) => app
         .get('/info', async ({ params: { organization_name, project_id }, set }) => {
             const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
                 GITHUB_ORGANIZATION_PROJECT_INFO_BY_URL(organization_name, project_id),
@@ -115,7 +115,7 @@ export const GITHUB_URL = new Elysia({ prefix: '/url' })
                 tags: ['github', 'repositories', 'scoped']
             }
         })
-        .get('/repositories/milestone/:milestone_id', async ({ params: { organization_name, project_id, milestone_id }, query, set }) => {
+        .get('/repositories/milestones/:milestone_id', async ({ params: { organization_name, project_id, milestone_id }, query, set }) => {
             const depth_values = query.depth.split(',');
             const depth_values_are_of_valid_enum_type = isValidEnumArray(depth_values, Object.values(GITHUB_ORGANIZATION_MILESTONES_DEPTH));
             const issue_states_values = query.issue_states.split(',');
@@ -192,7 +192,7 @@ export const GITHUB_URL = new Elysia({ prefix: '/url' })
         }),
     );
 
-export const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
+const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
     .group("/:organization_name", (app) => app
         .get('', async ({ params: { organization_name }, set }) => {
             const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
@@ -258,3 +258,6 @@ export const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
             })
         )
     );
+
+export const GITHUB_INFO = new Elysia({ prefix: '/info' })
+    .use(GITHUB_ORGANIZATION)
