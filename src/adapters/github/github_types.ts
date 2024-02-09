@@ -56,12 +56,12 @@ export const GITHUB_PROJECT_INPUT_SCOPES_AS_OBJECT = {
     }
 }
 
-export enum GITHUB_ORGANIZATION_MILESTONES_DEPTH {
+export enum GITHUB_MILESTONES_DEPTH {
     INFO = "info",
     ISSUES = "issues"
 }
 
-export enum GITHUB_ORGANIZATION_MILESTONE_ISSUE_STATES {
+export enum GITHUB_MILESTONE_ISSUE_STATES {
     OPEN = "open",
     CLOSED = "closed"
 }

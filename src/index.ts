@@ -3,7 +3,7 @@ import { cors } from '@elysiajs/cors'; // https://elysiajs.com/plugins/cors.html
 import { html } from '@elysiajs/html'; // https://elysiajs.com/plugins/html.html
 import { swagger } from '@elysiajs/swagger'; // https://elysiajs.com/plugins/swagger
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
-import { GITHUB_URL, GITHUB_INFO, GITHUB_URL_INPUT_TYPES } from "./adapters/github";
+import { GITHUB_ORGS, GITHUB_USERS, GITHUB_INFO, GITHUB_ARRAY_INPUT_TYPES } from "./adapters/github";
 
 const SWAGGER_PATH = "/api";
 const HOME_URLS = {
@@ -72,9 +72,10 @@ const app = new Elysia()
     origin: CORS_ORIGINS
   }))
   .group('/github', (app) => app
-    .use(GITHUB_URL)
-    .use(GITHUB_INFO)
-    .use(GITHUB_URL_INPUT_TYPES)
+    .use(GITHUB_ORGS)
+    .use(GITHUB_USERS)
+    .use(GITHUB_INFO) // remove
+    .use(GITHUB_ARRAY_INPUT_TYPES)
   )
   .use(swagger({
     path: SWAGGER_PATH,

@@ -1,5 +1,5 @@
 import { issues, license, topics, labels, vulnerabilities, releases, deployments } from "./github_repository_scopes";
-import { GITHUB_ORGANIZATION_MILESTONES_DEPTH, GITHUB_ORGANIZATION_MILESTONE_ISSUE_STATES, GITHUB_PROJECT_INPUT_SCOPES, GITHUB_PROJECT_SCOPES, GITHUB_REPOSITORY_SCOPES, GRAMMATICAL_NUMBER } from "./github_types";
+import { GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_PROJECT_INPUT_SCOPES, GITHUB_PROJECT_SCOPES, GITHUB_REPOSITORY_SCOPES, GRAMMATICAL_NUMBER } from "./github_types";
 
 /* Query building helper functions: */
 
@@ -313,16 +313,16 @@ const GITHUB_PROJECT_SCOPED = function (project_id: number, scopes: GITHUB_PROJE
 
 /* Entry functions: */
 
-/* ORGANIZATIONS */
+/* ORGANIZATIONS and USERS */
 
 /**
  * Entry function for the fetching of a **organization project** from the Github GraphQl API.
- * Schema: ``/orgs/<ORGANIZATION_NAME>/projects/<PROJECT_NUMBER>[/views/<VIEW_NUMBER>]``
+ * Schema: ``/orgs/<LOGIN_NAME>/projects/<PROJECT_NUMBER>[/views/<VIEW_NUMBER>]``
  */
-export const GITHUB_ORGANIZATION_PROJECT_BY_URL = function (organization_name: string, project_id: number, project_view: number) {
+export const GITHUB_DEFAULT_PROJECT = function (login_name: string, project_id: number, project_view: number, login_type: string = "organization") {
     // every projects items are stored in the repositories it is connected to
     return `{
-        organization(login: "${organization_name}") {
+        ${login_type}(login: "${login_name}") {
             ${GITHUB_PROJECT(GRAMMATICAL_NUMBER.DEFAULT, project_id, project_view)}
         }
     }`
@@ -330,12 +330,12 @@ export const GITHUB_ORGANIZATION_PROJECT_BY_URL = function (organization_name: s
 
 /**
  * Entry function for the fetching of a **organization projects root info** from the Github GraphQl API.
- * Schema: ``/users/<ORGANIZATION_NAME>/projects/<PROJECT_NUMBER>/info``
+ * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/infos``
  */
-export const GITHUB_ORGANIZATION_PROJECT_INFO_BY_URL = function (organization_name: string, project_id: number) {
+export const GITHUB_PROJECT_INFO = function (login_name: string, project_id: number, login_type: string = "organization") {
     // every projects items are stored in the repositories it is connected to
     return `{
-        organization(login: "${organization_name}") {
+        ${login_type}(login: "${login_name}") {
             ${GITHUB_PROJECT_SCOPED(project_id, [GITHUB_PROJECT_SCOPES.INFO])}
         }
     }`
@@ -343,12 +343,12 @@ export const GITHUB_ORGANIZATION_PROJECT_INFO_BY_URL = function (organization_na
 
 /**
  * Entry function for the fetching of a **organization projects repositories** from the Github GraphQl API.
- * Schema: ``/users/<ORGANIZATION_NAME>/projects/<PROJECT_NUMBER>/repositories``
+ * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/repositories``
  */
-export const GITHUB_ORGANIZATION_PROJECT_REPOSITORIES_BY_URL = function (organization_name: string, project_id: number) {
+export const GITHUB_PROJECT_REPOSITORIES = function (login_name: string, project_id: number, login_type: string = "organization") {
     // every projects items are stored in the repositories it is connected to
     return `{
-        organization(login: "${organization_name}") {
+        ${login_type}(login: "${login_name}") {
             ${GITHUB_PROJECT_SCOPED(project_id, {
                 project_scopes: [GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED],
                 repository_scopes: [GITHUB_REPOSITORY_SCOPES.ALL]
@@ -359,12 +359,12 @@ export const GITHUB_ORGANIZATION_PROJECT_REPOSITORIES_BY_URL = function (organiz
 
 /**
  * Entry function for the fetching of a **organization projects repositories** from the Github GraphQl API (scoped).
- * Schema: ``/users/<ORGANIZATION_NAME>/projects/<PROJECT_NUMBER>/repositories?scopes=<REPOSITORY_SCOPES>``
+ * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/repositories?scopes=<REPOSITORY_SCOPES>``
  */
-export const GITHUB_ORGANIZATION_PROJECT_REPOSITORIES_BY_URL_AND_QUERY = function (organization_name: string, project_id: number, repository_scopes: GITHUB_REPOSITORY_SCOPES[] | null) {
+export const GITHUB_PROJECT_REPOSITORIES_AND_QUERY = function (login_name: string, project_id: number, repository_scopes: GITHUB_REPOSITORY_SCOPES[] | null, login_type: string = "organization") {
     // every projects items are stored in the repositories it is connected to
     return `{
-        organization(login: "${organization_name}") {
+        ${login_type}(login: "${login_name}") {
             ${GITHUB_PROJECT_SCOPED(project_id, {
                 project_scopes: [GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED],
                 repository_scopes: repository_scopes
@@ -375,16 +375,20 @@ export const GITHUB_ORGANIZATION_PROJECT_REPOSITORIES_BY_URL_AND_QUERY = functio
 
 /**
  * Entry function for the fetching of **milestones/issues** from the Github GraphQl API (scoped).
- * Schema: ``/users/<ORGANIZATION_NAME>/projects/<PROJECT_NUMBER>/repositories/milestones?depth=<MILESTONE_DEPTH>&issue_states=<ISSUE_STATES>``
+ * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/repositories/milestones?depth=<MILESTONE_DEPTH>&issue_states=<ISSUE_STATES>``
  */
-export const GITHUB_ORGANIZATION_PROJECT_REPOSITORY_MILESTONES_BY_URL_AND_QUERY = function (organization_name: string, project_id: number, milestone_id: number, depth: GITHUB_ORGANIZATION_MILESTONES_DEPTH[], issue_states: GITHUB_ORGANIZATION_MILESTONE_ISSUE_STATES[] | null = null) {
+export const GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY = function (
+    login_name: string, project_id: number, milestone_id: number, 
+    depth: GITHUB_MILESTONES_DEPTH[], issue_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null,
+    login_type: string = "organization") {
     // every projects items are stored in the repositories it is connected to
-    const return_node_root_infos = depth.includes(GITHUB_ORGANIZATION_MILESTONES_DEPTH.INFO);
-    const return_node_issues = depth.includes(GITHUB_ORGANIZATION_MILESTONES_DEPTH.ISSUES);
+
+    const return_node_root_infos = depth.includes(GITHUB_MILESTONES_DEPTH.INFO);
+    const return_node_issues = depth.includes(GITHUB_MILESTONES_DEPTH.ISSUES);
     const issue_states_string_uppercase = issue_states ? issue_states.map((state) => state.toUpperCase()).join('", "') : null;
     
     return `{
-        organization(login: "${organization_name}") {
+        ${login_type}(login: "${login_name}") {
             projectV2(number: ${project_id}) {
                 repositories(first: 10) {
                     ${return_node_root_infos ? "totalCount" : ""}
@@ -447,27 +451,11 @@ export const GITHUB_ORGANIZATION_PROJECT_REPOSITORY_MILESTONES_BY_URL_AND_QUERY 
     }`
 }
 
-/* USERS */
-
-/**
- * Entry function for the fetching of a **user project** from the Github GraphQl API.
- * Schema: ``/users/<USER_NAME>/projects/<PROJECT_NUMBER>[/views/<VIEW_NUMBER>]``
- */
-export const GITHUB_USER_PROJECT_BY_URL = function (user_name: string, project_id: number, project_view: number) { // not implemented yet
-    // every projects items are stored in the repositories it is connected to
-    return `{
-        user(login: "${user_name}") {
-            ${GITHUB_PROJECT(GRAMMATICAL_NUMBER.DEFAULT, project_id, project_view)}
-        }
-    }`
-}
-
-
 /* Testing functions: */
 
-export const GITHUB_ORGANIZATION_BY_NAME = function (organization_name: string) { 
+export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) { 
     return `{
-        organization(login: "${organization_name}") {
+        organization(login: "${login_name}") {
             login
             name
             description
@@ -554,16 +542,16 @@ export const GITHUB_ORGANIZATION_BY_NAME = function (organization_name: string) 
     }`;
 }
 
-export const GITHUB_REPOSITORY_BY_OWNER_NAME_AND_REPOSITORY_NAME = function (organization_name: string, repository_name: string) {
+export const GITHUB_ORGANIZATION_REPOSITORY_BY_OWNER_NAME_AND_REPOSITORY_NAME = function (login_name: string, repository_name: string) {
     return `{
-        ${GITHUB_REPOSITORY(GRAMMATICAL_NUMBER.SINGULAR, organization_name, repository_name)}
+        ${GITHUB_REPOSITORY(GRAMMATICAL_NUMBER.SINGULAR, login_name, repository_name)}
     }`
 }
 
-export const GITHUB_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_PROJECT_NAME = function (organization_name: string, repository_name: string, project_name: string, view: number) {
+export const GITHUB_ORGANIZATION_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_PROJECT_NAME = function (login_name: string, repository_name: string, project_name: string, view: number) {
     // every project has a repository for its items
     return `{
-        repository(owner: "${organization_name}", name: "${repository_name}") {
+        repository(owner: "${login_name}", name: "${repository_name}") {
             ${GITHUB_PROJECT(GRAMMATICAL_NUMBER.SINGULAR, project_name, view)}
         }
     }`
