@@ -19,6 +19,12 @@ export const HOME_URLS = {
     "website": {
         "url": "https://propromo.duckdns.org",
         "name": "Website"
+    },
+    "apps": {
+        "github": {
+            "url": "https://github.com/apps/propromo-software",
+            "name": "Github App"
+        }
     }
 } as const;
 
@@ -49,6 +55,7 @@ export const ROOT = `
         (<a href="${HOME_URLS.api.download.url}" download="${HOME_URLS.api.download.file}">${HOME_URLS.api.download.action}</a>)
         </li>
         <li><a href="${HOME_URLS.website.url}">${HOME_URLS.website.name}</a></li>
+        <li><a href="${HOME_URLS.apps.github.url}">${HOME_URLS.apps.github.name}</a></li>
       </ul>
     </body>
 </html>`;

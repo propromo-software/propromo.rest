@@ -1,7 +1,83 @@
 import { GraphqlResponseError } from "@octokit/graphql"; // Testing GraphQL Queries: https://docs.github.com/en/graphql/overview/explorer
 import { ParseError, NotFoundError, InternalServerError, Context } from "elysia"; // https://elysiajs.com/introduction.html
-import { Octokit } from "octokit"; // { App } // https://github.com/octokit/octokit.js
-import { GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES, GraphqlResponse, GraphqlResponseErrorCode } from "./github_types";
+import { App, Octokit } from "octokit"; // { App } // https://github.com/octokit/octokit.js
+// import { createAppAuth } from "@octokit/auth-app"; // https://github.com/octokit/octokit.js?tab=readme-ov-file#authentication
+import {
+    GITHUB_AUTHENTICATION_STRATEGY,
+    GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,
+    GITHUB_MILESTONES_DEPTH,
+    GITHUB_MILESTONE_ISSUE_STATES,
+    GITHUB_REPOSITORY_SCOPES,
+    GraphqlResponse,
+    GraphqlResponseErrorCode
+} from "./github_types";
+import 'dotenv/config'; // process.env.<ENV_VAR_NAME>
+import jwt, { Secret } from 'jsonwebtoken';
+
+const GITHUB_APP_PRIVATE_KEY = Buffer.from(process.env.GITHUB_APP_PRIVATE_KEY as String, 'utf-8').toString("utf-8");
+const GITHUB_APP_ID = process.env.GITHUB_APP_ID as string;
+
+/**
+ * Generates a JSON Web Token (JWT) for authentication.  
+ * @documentation https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
+ * @deprecated is handled by the octokit sdk
+ * 
+ * @return {string} The generated JWT for authentication.
+ */
+export function generateJwt(): string {
+    const privatePem = GITHUB_APP_PRIVATE_KEY;
+    const payload = {
+        iat: Math.floor(Date.now() / 1000) - 60,
+        exp: Math.floor(Date.now() / 1000) + (10 * 60),
+        iss: process.env.GITHUB_APP_ID,
+        alg: 'RS256'
+    };
+
+    const cert: Secret = {
+        key: privatePem,
+        passphrase: ''
+    };
+
+    return jwt.sign(payload, cert);
+}
+
+/**
+ * Generates an Octokit object based on the provided authentication strategy and credentials.
+ * @documentation https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#using-octokitjs-to-authenticate-with-an-installation-id
+ *
+ * @param {GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null} authStrategy - The authentication strategy options or null
+ * @param {string | null} auth - The authentication token or null
+ * @return {Octokit | null} The Octokit object or null
+ */
+async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null, auth: string | null = null): Promise<Octokit | null> {
+    let octokitObject = null;
+
+    if (auth && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY.TOKEN(auth))) {
+        octokitObject = new Octokit({ auth });
+    } else if (authStrategy === GITHUB_AUTHENTICATION_STRATEGY.APP) {
+        /* octokitObject = new Octokit({ // old method?
+            authStrategy: createAppAuth,
+            auth: {
+                appId: process.env.GITHUB_APP_ID,
+                privateKey: GITHUB_APP_PRIVATE_KEY,
+                clientId: process.env.GITHUB_APP_CLIENT_ID,
+                clientSecret: process.env.GITHUB_APP_CLIENT_SECRET,
+                installationId: null
+            }
+        });
+
+        octokitObject.auth({ type: 'app' }); */
+
+        const octokitApp = new App({ // type: "installation"
+            appId: GITHUB_APP_ID,
+            privateKey: GITHUB_APP_PRIVATE_KEY,
+        });
+
+        octokitObject = await octokitApp.getInstallationOctokit(47547924); // get Installation by installationId TODO: make dynamic
+    }
+
+    return octokitObject;
+}
 
 /**
  * Fetches Github data using GraphQL.
@@ -11,11 +87,15 @@ import { GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITO
  * @param {Context["set"]} set - the context set function
  * @return {Promise<GraphqlResponse<T>>} a promise that resolves to a GraphQL response
  */
-export async function fetchGithubDataUsingGraphql<T>(graphqlInput: string, auth: string | undefined, set: Context["set"]): Promise<GraphqlResponse<T>> {
+export async function fetchGithubDataUsingGraphql<T>(graphqlInput: string, auth: string | undefined | null, set: Context["set"], authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null): Promise<GraphqlResponse<T>> {
     set.headers = { "Content-Type": "application/json" };
 
+    if (auth === undefined) return { success: false, error: "No authentication token provided" };
+
     try {
-        const octokit = new Octokit({ auth });
+        const octokit = await getOctokitObject(authStrategy, auth);
+        if (!octokit) return { success: false, error: "Invalid authentication strategy" };
+
         const result = await octokit.graphql<T>(graphqlInput);
 
         return { success: true, data: result };
@@ -36,7 +116,7 @@ export async function fetchGithubDataUsingGraphql<T>(graphqlInput: string, auth:
             return { success: false, error: error.status };
         } else {
             set.status = error?.status ?? 500;
-            return { success: false, error: error?.status };
+            return { success: false, error: set.status };
         }
     }
 }

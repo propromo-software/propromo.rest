@@ -1,10 +1,11 @@
 import { swagger } from '@elysiajs/swagger'; // https://elysiajs.com/plugins/swagger
-import { GITHUB_ORGS, GITHUB_USERS, GITHUB_INFO, GITHUB_ARRAY_INPUT_TYPES } from "./adapters/github";
+import { GITHUB_ORGS, GITHUB_USERS, GITHUB_INFO, GITHUB_ARRAY_INPUT_TYPES, GITHUB_APP_AUTHENTICATION } from "./adapters/github";
 import { Elysia } from "elysia";
 import { SWAGGER_PATH, ROOT_PATHS } from '../config';
 
 export const V1 = new Elysia({ prefix: '/v1' })
     .group('/github', (app) => app
+        .use(GITHUB_APP_AUTHENTICATION)
         .use(GITHUB_ORGS)
         .use(GITHUB_USERS)
         .use(GITHUB_INFO) // remove
@@ -21,6 +22,7 @@ export const V1 = new Elysia({ prefix: '/v1' })
             },
             tags: [
                 { name: 'github', description: 'used for fetching info from the Github GraphQl API' },
+                { name: 'authentication', description: 'auth' },
                 { name: 'organization', description: 'organization' },
                 { name: 'projects', description: 'organization or user projects' },
                 { name: 'repositories', description: 'project repositories' },

@@ -15,7 +15,7 @@ import {
     GITHUB_ORGANIZATION_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_PROJECT_NAME
 } from "./github_graphql_queries";
 import { fetchGithubDataUsingGraphql, validateViewParameter, parseMilestoneDepthAndIssueStates, parseScopedRepositories } from "./github_functions";
-import { GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES } from "./github_types";
+import { /* GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,  */GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES } from "./github_types";
 
 const GITHUB_PAT = process.env.GITHUB_PAT;
 const GITHUB_PROJECT_PARAMS = {
@@ -42,6 +42,18 @@ const GITHUB_MILESTONE_QUERY = {
     issue_states: t.String(),
 } as const;
 
+/* AUTHENTICATION WEBHOOK */
+
+export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth/app' })
+    .post('', async ({ body }) => {
+        return body;
+    }, {
+        detail: {
+            description: "",
+            tags: ['github', 'authentication']
+        }
+    });
+
 /* TYPES (only the ones of the array properties, the rest can be found in /api/json) */
 
 export const GITHUB_ARRAY_INPUT_TYPES = new Elysia({ prefix: '/input' })
@@ -58,7 +70,7 @@ export const GITHUB_ARRAY_INPUT_TYPES = new Elysia({ prefix: '/input' })
             description: "milestone scopes",
             endpoint: "/github/orgs/{login_name}/projects/{project_id}/repositories/milestones/{milestone_id}?depth=<DEPTH_1,DEPTH_2>&issue_states=<ISSUE_STATE_1,ISSUE_STATE_2>",
             type: Object.values(GITHUB_MILESTONES_DEPTH)
-        }) 
+        })
         scopes.push({
             name: "GITHUB_MILESTONE_ISSUE_STATES",
             description: "issue scopes",
@@ -68,14 +80,15 @@ export const GITHUB_ARRAY_INPUT_TYPES = new Elysia({ prefix: '/input' })
 
         return scopes;
     }, {
-    detail: {
-        description: "",
-        tags: ['github', 'types']
-    }});
+        detail: {
+            description: "",
+            tags: ['github', 'types']
+        }
+    });
 
 /* PROJECT */
 
-export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' } )
+export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
     .group("/:login_name/projects/:project_id", (app) => app
         .get('/infos', async ({ params: { login_name, project_id }, set }) => {
             const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
@@ -83,6 +96,15 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' } )
                 GITHUB_PAT,
                 set
             );
+
+            /*
+            const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
+                GITHUB_PROJECT_INFO(login_name, project_id),
+                null,
+                set,
+                GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP
+            );
+            */
 
             return JSON.stringify(response, null, 2);
         }, {
@@ -109,14 +131,14 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' } )
         })
         .get('/repositories/scoped', async ({ params: { login_name, project_id }, query, set }) => {
             const parsedScopes = parseScopedRepositories(query.scope, set);
-            
+
             if (Array.isArray(parsedScopes)) {
                 const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
                     GITHUB_PROJECT_REPOSITORIES_AND_QUERY(login_name, project_id, parsedScopes),
                     GITHUB_PAT,
                     set
                 );
-    
+
                 return JSON.stringify(response, null, 2);
             } else {
                 return JSON.stringify(parsedScopes, null, 2);
@@ -131,7 +153,7 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' } )
         })
         .get('/repositories/milestones/:milestone_id', async ({ params: { login_name, project_id, milestone_id }, query, set }) => {
             const parsedDepthAndIssueStates = parseMilestoneDepthAndIssueStates(query.depth, query.issue_states, set);
-            
+
             if ('depth' in parsedDepthAndIssueStates && 'issue_states' in parsedDepthAndIssueStates) {
                 const { depth, issue_states } = parsedDepthAndIssueStates;
 
@@ -140,7 +162,7 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' } )
                     GITHUB_PAT,
                     set
                 );
-    
+
                 return JSON.stringify(response, null, 2);
             } else {
                 return JSON.stringify(parsedDepthAndIssueStates, null, 2);
@@ -170,7 +192,7 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' } )
             }
         })
         .get('/views/:project_view', async ({ params: { login_name, project_id, project_view }, set }) => {
-            const view  = validateViewParameter(project_view);
+            const view = validateViewParameter(project_view);
 
             const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
                 GITHUB_DEFAULT_PROJECT(login_name, project_id, view),
@@ -222,7 +244,7 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
         })
         .get('/repositories/scoped', async ({ params: { login_name, project_id }, query, set }) => {
             const parsedScopes = parseScopedRepositories(query.scope, set);
-            
+
             if (Array.isArray(parsedScopes)) {
                 const response = await fetchGithubDataUsingGraphql<{ user: User }>(
                     GITHUB_PROJECT_REPOSITORIES_AND_QUERY(login_name, project_id, parsedScopes, "user"),
@@ -244,7 +266,7 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
         })
         .get('/repositories/milestones/:milestone_id', async ({ params: { login_name, project_id, milestone_id }, query, set }) => {
             const parsedDepthAndIssueStates = parseMilestoneDepthAndIssueStates(query.depth, query.issue_states, set);
-            
+
             if ('depth' in parsedDepthAndIssueStates && 'issue_states' in parsedDepthAndIssueStates) {
                 const { depth, issue_states } = parsedDepthAndIssueStates;
 
@@ -283,7 +305,7 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
             }
         })
         .get('/views/:project_view', async ({ params: { login_name, project_id, project_view }, set }) => {
-            const view  = validateViewParameter(project_view);
+            const view = validateViewParameter(project_view);
 
             const response = await fetchGithubDataUsingGraphql<{ user: User }>(
                 GITHUB_DEFAULT_PROJECT(login_name, project_id, view, "user"),
@@ -344,7 +366,7 @@ const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
             })
             .get('/project/:project_name', async (
                 { query, params: { login_name, repository_name, project_name }, set }) => {
-                const view  = validateViewParameter(String(query.view));
+                const view = validateViewParameter(String(query.view));
 
                 const response = await fetchGithubDataUsingGraphql<{ repository: Repository }>(
                     GITHUB_ORGANIZATION_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_PROJECT_NAME(login_name, repository_name, project_name, view),

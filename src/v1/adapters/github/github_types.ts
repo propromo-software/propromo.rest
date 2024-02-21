@@ -1,5 +1,15 @@
 import { ElysiaErrors } from "elysia/dist/error";
 
+export enum GITHUB_AUTHENTICATION_STRATEGY_OPTIONS {
+    TOKEN = "TOKEN",
+    APP = "APP"
+}
+
+export const GITHUB_AUTHENTICATION_STRATEGY = {
+    TOKEN: (value: string) => value,
+    APP: "APP"
+}
+
 export interface GraphqlResponse<T> {
     error?: any;
     success?: boolean;
@@ -44,11 +54,11 @@ export enum GITHUB_PROJECT_SCOPES {
     REPOSITORIES_LINKED = "repositories"
 }
 
-export type GITHUB_PROJECT_INPUT_SCOPES = GITHUB_PROJECT_SCOPES[] | {project_scopes: GITHUB_PROJECT_SCOPES[], repository_scopes: null | GITHUB_REPOSITORY_SCOPES[]};
+export type GITHUB_PROJECT_INPUT_SCOPES = GITHUB_PROJECT_SCOPES[] | { project_scopes: GITHUB_PROJECT_SCOPES[], repository_scopes: null | GITHUB_REPOSITORY_SCOPES[] };
 export const GITHUB_PROJECT_INPUT_SCOPES_AS_OBJECT = {
     "OPTION_1": Object.values(GITHUB_PROJECT_SCOPES).join(" | "),
     "OPTION_2": {
-        "project_scopes": Object.values(GITHUB_PROJECT_SCOPES).join(" | "), 
+        "project_scopes": Object.values(GITHUB_PROJECT_SCOPES).join(" | "),
         "repository_scopes": {
             "OPTION_1": null,
             "OPTION_2": Object.values(GITHUB_REPOSITORY_SCOPES).join(" | ")
