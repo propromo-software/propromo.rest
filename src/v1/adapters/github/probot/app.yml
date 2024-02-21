@@ -3,6 +3,7 @@
 #
 # NOTE: changing this file will not update your GitHub App settings.
 # You must visit github.com/settings/apps/your-app-name to edit them.
+# This is just documentation, so that the app can easily be created again.
 #
 # Read more about configuring your GitHub App:
 # https://probot.github.io/docs/development/#configuring-a-github-app
@@ -24,28 +25,28 @@ default_events:
   # - gollum
   # - issue_comment
   - issues
-# - label
-# - milestone
-# - member
-# - membership
-# - org_block
-# - organization
-# - page_build
-# - project
-# - project_card
-# - project_column
-# - public
-# - pull_request
-# - pull_request_review
-# - pull_request_review_comment
-# - push
-# - release
-# - repository
-# - repository_import
-# - status
-# - team
-# - team_add
-# - watch
+  # - label
+  # - milestone
+  # - member
+  # - membership
+  # - org_block
+  # - organization
+  # - page_build
+  # - project
+  # - project_card
+  # - project_column
+  # - public
+  # - pull_request
+  # - pull_request_review
+  # - pull_request_review_comment
+  # - push
+  # - release
+  # - repository
+  # - repository_import
+  # - status
+  # - team
+  # - team_add
+  # - watch
 
 # The set of permissions needed by the GitHub App. The format of the object uses
 # the permission name for the key (for example, issues) and the access type for
@@ -70,7 +71,7 @@ default_permissions:
 
   # Issues and related comments, assignees, labels, and milestones.
   # https://developer.github.com/v3/apps/permissions/#permission-on-issues
-  issues: write
+  issues: read
 
   # Search repositories, list collaborators, and access repository metadata.
   # https://developer.github.com/v3/apps/permissions/#metadata-permissions
@@ -124,14 +125,11 @@ default_permissions:
   # https://developer.github.com/v3/apps/permissions/
   # organization_administration: read
 # The name of the GitHub App. Defaults to the name specified in package.json
-# name: My Probot App
-
+name: Propromo Software
 # The homepage of your GitHub App.
-# url: https://example.com/
-
+url: https://propromo-rest.duckdns.org
 # A description of the GitHub App.
-# description: A description of my awesome app
-
+description: Your client wants to be involved. Propromo makes it possible.
 # Set to true when your GitHub App is available to the public or false when it is only accessible to the owner of the app.
 # Default: true
 # public: false
