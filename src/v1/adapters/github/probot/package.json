@@ -13,6 +13,8 @@
   ],
   "scripts": {
     "build": "tsc",
+    "dev-trace-log": "LOG_LEVEL=trace npm run dev",
+    "dev": "npm run build && npm run start",
     "start": "probot run ./lib/index.js",
     "test": "jest"
   },
