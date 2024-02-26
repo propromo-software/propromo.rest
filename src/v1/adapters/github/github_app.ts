@@ -2,11 +2,15 @@ import jwt, { Secret } from 'jsonwebtoken';
 import { App } from 'octokit';
 
 const GITHUB_APP_ID = process.env.GITHUB_APP_ID as string;
+const GITHUB_APP_WEBHOOK_SECRET = process.env.GITHUB_APP_WEBHOOK_SECRET as string;
 const GITHUB_APP_PRIVATE_KEY = Buffer.from(process.env.GITHUB_APP_PRIVATE_KEY as String, 'utf-8').toString("utf-8");
 
 export const octokitApp = new App({ // type: "installation"
     appId: GITHUB_APP_ID,
     privateKey: GITHUB_APP_PRIVATE_KEY,
+    webhooks: {
+        secret: GITHUB_APP_WEBHOOK_SECRET
+    }
 });
 
 octokitApp.webhooks.onAny(async ({ id, name, payload }) => {
