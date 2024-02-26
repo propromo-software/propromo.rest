@@ -16,6 +16,9 @@ import {
 } from "./github_graphql_queries";
 import { fetchGithubDataUsingGraphql, validateViewParameter, parseMilestoneDepthAndIssueStates, parseScopedRepositories } from "./github_functions";
 import { /* GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,  */GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES } from "./github_types";
+import { createPinoLogger } from '@bogeychan/elysia-logger'; // https://github.com/bogeychan/elysia-logger/issues/3
+
+const log = createPinoLogger();
 
 const GITHUB_PAT = process.env.GITHUB_PAT;
 const GITHUB_PROJECT_PARAMS = {
@@ -45,10 +48,15 @@ const GITHUB_MILESTONE_QUERY = {
 /* APP WEBHOOK */
 
 export const GITHUB_APP_WEBHOOK = new Elysia({ prefix: '/webhooks' })
-    .post('', async ({ body }) => {
+    .post('', async (ctx) => {
         // notify the frontend about the changes
+        // TODO: send the data to the frontend, or write it to the database
+        const child = log.child({
+            payload: ctx.body
+        })
+        child.info(ctx, "webhook received");
 
-        return JSON.stringify(body, null, 2);
+        return JSON.stringify(ctx.body, null, 2);
     }, {
         detail: {
             description: "",

@@ -2,10 +2,11 @@ import { Elysia } from "elysia"; // https://elysiajs.com/introduction.html
 import { cors } from '@elysiajs/cors'; // https://elysiajs.com/plugins/cors.html
 import { html } from '@elysiajs/html'; // https://elysiajs.com/plugins/html.html
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
-import { CORS_ORIGINS, LATEST_MAJOR_VERSION, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
+import { CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { V1 } from "./v1";
+import { type InferContext, logger } from '@bogeychan/elysia-logger';
 
-const app = new Elysia()
+const app: Elysia = new Elysia()
   .use(staticPlugin({
     assets: "static",
     prefix: "/"
@@ -13,6 +14,21 @@ const app = new Elysia()
   .use(cors({
     origin: CORS_ORIGINS
   }))
+  .use(
+    logger({
+      level: 'error',
+      /**
+       * This function will be invoked for each `log`-method called with `context`
+       * where you can pass additional properties that need to be logged
+       */
+      customProps(ctx: InferContext<typeof app>) {
+        return {
+          params: ctx.params,
+          query: ctx.query
+        };
+      }
+    })
+  )
   .use(html())
   .use(ROOT_ROUTES)
   // VERSIONS
