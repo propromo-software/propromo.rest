@@ -1,6 +1,6 @@
 import { GraphqlResponseError } from "@octokit/graphql"; // Testing GraphQL Queries: https://docs.github.com/en/graphql/overview/explorer
 import { ParseError, NotFoundError, InternalServerError, Context } from "elysia"; // https://elysiajs.com/introduction.html
-import { App, Octokit } from "octokit"; // { App } // https://github.com/octokit/octokit.js
+import { Octokit } from "octokit"; // { App } // https://github.com/octokit/octokit.js
 // import { createAppAuth } from "@octokit/auth-app"; // https://github.com/octokit/octokit.js?tab=readme-ov-file#authentication
 import {
     GITHUB_AUTHENTICATION_STRATEGY,
@@ -12,34 +12,7 @@ import {
     GraphqlResponseErrorCode
 } from "./github_types";
 import 'dotenv/config'; // process.env.<ENV_VAR_NAME>
-import jwt, { Secret } from 'jsonwebtoken';
-
-const GITHUB_APP_PRIVATE_KEY = Buffer.from(process.env.GITHUB_APP_PRIVATE_KEY as String, 'utf-8').toString("utf-8");
-const GITHUB_APP_ID = process.env.GITHUB_APP_ID as string;
-
-/**
- * Generates a JSON Web Token (JWT) for authentication.  
- * @documentation https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
- * @deprecated is handled by the octokit sdk
- * 
- * @return {string} The generated JWT for authentication.
- */
-export function generateJwt(): string {
-    const privatePem = GITHUB_APP_PRIVATE_KEY;
-    const payload = {
-        iat: Math.floor(Date.now() / 1000) - 60,
-        exp: Math.floor(Date.now() / 1000) + (10 * 60),
-        iss: process.env.GITHUB_APP_ID,
-        alg: 'RS256'
-    };
-
-    const cert: Secret = {
-        key: privatePem,
-        passphrase: ''
-    };
-
-    return jwt.sign(payload, cert);
-}
+import { octokitApp } from "./github_app";
 
 /**
  * Generates an Octokit object based on the provided authentication strategy and credentials.
@@ -67,11 +40,6 @@ async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPT
         });
 
         octokitObject.auth({ type: 'app' }); */
-
-        const octokitApp = new App({ // type: "installation"
-            appId: GITHUB_APP_ID,
-            privateKey: GITHUB_APP_PRIVATE_KEY,
-        });
 
         // const data = await octokitApp.octokit.rest.apps.getAuthenticated();
         // console.log(data);
