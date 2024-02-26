@@ -49,10 +49,10 @@ export function generateJwt(): string {
  * @param {string | null} auth - The authentication token or null
  * @return {Octokit | null} The Octokit object or null
  */
-async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null, auth: string | null = null): Promise<Octokit | null> {
+async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null, auth: string | number | null): Promise<Octokit | null> {
     let octokitObject = null;
 
-    if (auth && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY.TOKEN(auth))) {
+    if (typeof auth === "string" && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY.TOKEN(auth))) {
         octokitObject = new Octokit({ auth });
     } else if (authStrategy === GITHUB_AUTHENTICATION_STRATEGY.APP) {
         /* octokitObject = new Octokit({ // old method?
@@ -73,7 +73,12 @@ async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPT
             privateKey: GITHUB_APP_PRIVATE_KEY,
         });
 
-        octokitObject = await octokitApp.getInstallationOctokit(47547924); // get Installation by installationId TODO: make dynamic
+        // const data = await octokitApp.octokit.rest.apps.getAuthenticated();
+        // console.log(data);
+
+        octokitObject = await octokitApp.getInstallationOctokit(auth as number); // get Installation by installationId
+    } else {
+        return null;
     }
 
     return octokitObject;
@@ -87,7 +92,7 @@ async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPT
  * @param {Context["set"]} set - the context set function
  * @return {Promise<GraphqlResponse<T>>} a promise that resolves to a GraphQL response
  */
-export async function fetchGithubDataUsingGraphql<T>(graphqlInput: string, auth: string | undefined | null, set: Context["set"], authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null): Promise<GraphqlResponse<T>> {
+export async function fetchGithubDataUsingGraphql<T>(graphqlInput: string, auth: string | number | undefined | null, set: Context["set"], authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null): Promise<GraphqlResponse<T>> {
     set.headers = { "Content-Type": "application/json" };
 
     if (auth === undefined) return { success: false, error: "No authentication token provided" };

@@ -42,7 +42,21 @@ const GITHUB_MILESTONE_QUERY = {
     issue_states: t.String(),
 } as const;
 
-/* AUTHENTICATION WEBHOOK */
+/* APP WEBHOOK */
+
+export const GITHUB_APP_WEBHOOK = new Elysia({ prefix: '/webhooks' })
+    .post('', async ({ body }) => {
+        // notify the frontend about the changes
+
+        return JSON.stringify(body, null, 2);
+    }, {
+        detail: {
+            description: "",
+            tags: ['github', 'webhooks']
+        }
+    });
+
+/* APP AUTHENTICATION WEBHOOK */
 
 export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth/app' })
     .post('', async ({ body }) => {
@@ -96,15 +110,6 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
                 GITHUB_PAT,
                 set
             );
-
-            /*
-            const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                GITHUB_PROJECT_INFO(login_name, project_id),
-                null,
-                set,
-                GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP
-            );
-            */
 
             return JSON.stringify(response, null, 2);
         }, {

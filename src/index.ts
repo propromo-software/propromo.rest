@@ -2,7 +2,7 @@ import { Elysia } from "elysia"; // https://elysiajs.com/introduction.html
 import { cors } from '@elysiajs/cors'; // https://elysiajs.com/plugins/cors.html
 import { html } from '@elysiajs/html'; // https://elysiajs.com/plugins/html.html
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
-import { CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
+import { CORS_ORIGINS, LATEST_MAJOR_VERSION, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { V1 } from "./v1";
 
 const app = new Elysia()
@@ -18,6 +18,7 @@ const app = new Elysia()
   // VERSIONS
   .group(SWAGGER_PATH, (app) => app // if no version is specified, redirect to the latest version
     .get('', async ({ set }) => {
+      set.status = 308;
       set.redirect = LATEST_SWAGGER_PATH;
     })
     .get('/json', async ({ set }) => {
