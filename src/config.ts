@@ -2,6 +2,9 @@ import { Elysia } from "elysia";
 
 export const LATEST_MAJOR_VERSION = "v1";
 export const SWAGGER_PATH = "api";
+export const SWAGGER_PATH_EXCLUDE = [
+    `/${LATEST_MAJOR_VERSION}/${SWAGGER_PATH}`
+];
 export const LATEST_SWAGGER_PATH = `${LATEST_MAJOR_VERSION}/${SWAGGER_PATH}`;
 export const HOME_URLS = {
     "api": {
