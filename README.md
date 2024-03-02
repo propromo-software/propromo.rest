@@ -1,12 +1,15 @@
-# Elysia with Bun runtime
+# Propromo rest microservice
 
-## Getting Started
-To get started with this template, simply paste this command into your terminal:
-```bash
-bun create elysia ./elysia-example
-```
+# Deployments
+
+https://rest-microservice.onrender.com
+
+## Status
+
+https://propromo.openstatus.dev
 
 ## Development
+
 To start the development server run:
 ```bash
 bun run dev
