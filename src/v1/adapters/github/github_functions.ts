@@ -13,6 +13,7 @@ import {
 } from "./github_types";
 import 'dotenv/config'; // process.env.<ENV_VAR_NAME>
 import { octokitApp } from "./github_app";
+import { GITHUB_API_HEADERS } from "./github_globals";
 
 /**
  * Generates an Octokit object based on the provided authentication strategy and credentials.
@@ -69,7 +70,13 @@ export async function fetchGithubDataUsingGraphql<T>(graphqlInput: string, auth:
         const octokit = await getOctokitObject(authStrategy, auth);
         if (!octokit) return { success: false, error: "Invalid authentication strategy" };
 
-        const result = await octokit.graphql<T>(graphqlInput);
+        const result = await octokit.graphql<T>(graphqlInput,
+            {
+                headers: {
+                    ...GITHUB_API_HEADERS
+                }
+            }
+        );
 
         return { success: true, data: result };
     } catch (error: any) { // don't catch ValidationError!
