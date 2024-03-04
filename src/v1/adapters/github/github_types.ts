@@ -5,11 +5,6 @@ export enum GITHUB_AUTHENTICATION_STRATEGY_OPTIONS {
     APP = "APP"
 }
 
-export const GITHUB_AUTHENTICATION_STRATEGY = {
-    TOKEN: (value: string) => value,
-    APP: "APP"
-}
-
 export interface GraphqlResponse<T> {
     error?: any;
     success?: boolean;

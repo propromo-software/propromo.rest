@@ -7,6 +7,7 @@ import { V1 } from "./v1";
 import { type InferContext, logger } from '@bogeychan/elysia-logger';
 // ENV VARIABLES: process.env.<ENV_VAR_NAME>
 
+// @ts-ignore
 const app: Elysia = new Elysia()
   .use(staticPlugin({
     assets: "static",
@@ -40,6 +41,11 @@ const app: Elysia = new Elysia()
     })
     .get('/json', async ({ set }) => {
       set.redirect = "/" + LATEST_SWAGGER_PATH + '/json';
+    }, {
+      detail: {
+        description: "No authentication required. Redirects to the latest version of the API documentation in JSON format.",
+        tags: ['documentation', 'json']
+      }
     })
   )
   .use(V1)

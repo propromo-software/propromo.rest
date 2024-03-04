@@ -3,7 +3,6 @@ import { ParseError, NotFoundError, InternalServerError, Context } from "elysia"
 import { Octokit } from "octokit"; // { App } // https://github.com/octokit/octokit.js
 // import { createAppAuth } from "@octokit/auth-app"; // https://github.com/octokit/octokit.js?tab=readme-ov-file#authentication
 import {
-    GITHUB_AUTHENTICATION_STRATEGY,
     GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,
     GITHUB_MILESTONES_DEPTH,
     GITHUB_MILESTONE_ISSUE_STATES,
@@ -25,9 +24,9 @@ import { GITHUB_API_HEADERS } from "./github_globals";
 async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null, auth: string | number | null): Promise<Octokit | null> {
     let octokitObject = null;
 
-    if (typeof auth === "string" && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY.TOKEN(auth))) {
+    if (typeof auth === "string" && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN)) {
         octokitObject = new Octokit({ auth });
-    } else if (authStrategy === GITHUB_AUTHENTICATION_STRATEGY.APP) {
+    } else if (authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP) {
         /* octokitObject = new Octokit({ // old method?
             authStrategy: createAppAuth,
             auth: {

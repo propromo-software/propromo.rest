@@ -1,5 +1,5 @@
 import { Organization, Repository, User } from "@octokit/graphql-schema"; // https://www.npmjs.com/package/@octokit/graphql-schema
-import { Elysia, t } from "elysia"; // https://elysiajs.com/introduction.html
+import { Context, Elysia, t } from "elysia"; // https://elysiajs.com/introduction.html
 import {
     // PROJECT
     GITHUB_DEFAULT_PROJECT,
@@ -14,7 +14,7 @@ import {
     GITHUB_ORGANIZATION_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_PROJECT_NAME
 } from "./github_graphql_queries";
 import { fetchGithubDataUsingGraphql, validateViewParameter, parseMilestoneDepthAndIssueStates, parseScopedRepositories } from "./github_functions";
-import { /* GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,  */GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES } from "./github_types";
+import { GITHUB_AUTHENTICATION_STRATEGY_OPTIONS, GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES } from "./github_types";
 import { createPinoLogger } from '@bogeychan/elysia-logger'; // https://github.com/bogeychan/elysia-logger/issues/3
 import bearer from '@elysiajs/bearer';
 import jwt from '@elysiajs/jwt';
@@ -47,6 +47,43 @@ const GITHUB_MILESTONE_QUERY = {
     issue_states: t.String(),
 } as const;
 
+/* JWT */
+
+export const GITHUB_JWT = new Elysia()
+    .use(
+        jwt({
+            name: JWT_REALM,
+            secret: process.env.JWT_SECRET!,
+            alg: "HS256", /* alt: RS256 */
+            iss: "propromo"
+        })
+    )
+
+/* GUARDED ENDPOINTS */
+
+const guardEndpoints = (endpoints: Elysia) => new Elysia({
+    name: 'guardEndpoints-plugin',
+    seed: endpoints,
+})
+    .use(bearer())
+    .use(GITHUB_JWT)
+    .guard(
+        {
+            async beforeHandle({ bearer, set }) {
+                if (!bearer) {
+                    set.status = 400
+                    set.headers[
+                        'WWW-Authenticate'
+                    ] = `Bearer realm='${JWT_REALM}', error="invalid_request"`
+
+                    return 'Unauthorized'
+                }
+            }
+        },
+        (app) => app
+            .use(endpoints)
+    );
+
 /* APP WEBHOOK */
 
 export const GITHUB_APP_WEBHOOK = new Elysia({ prefix: '/webhooks' })
@@ -70,23 +107,15 @@ export const GITHUB_APP_WEBHOOK = new Elysia({ prefix: '/webhooks' })
 
 export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
     .use(bearer())
-    .use(
-        jwt({
-            name: JWT_REALM,
-            secret: process.env.JWT_SECRET!,
-            alg: "HS256", /* alt: RS256 */
-            iss: "propromo",
-            typ: "JWT"
-        })
-    )
+    .use(GITHUB_JWT)
     .post('/app', async ({ set, body, propromoRestAdaptersGithub }) => {
-        const code = (body?.code && body.code.length > 0)
+        const code = body?.code
             ? body.code
             : null;
-        const installation_id = (body?.installation_id && body.installation_id.length > 0)
+        const installation_id = body?.installation_id
             ? body.installation_id
             : null;
-        const setup_action = (body?.setup_action && body.setup_action.length > 0)
+        const setup_action = body?.setup_action
             ? body.setup_action
             : null; // type=install
 
@@ -122,8 +151,16 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
         return bearerToken;
     }, {
         body: t.Object({
-            code: t.String(),
-            installation_id: t.String(),
+            code: t.Optional(
+                t.String({
+                    minLength: 1
+                }),
+            ),
+            installation_id: t.Optional(
+                t.Numeric({
+                    minLength: 1
+                }),
+            ),
             setup_action: t.Const("install")
         }),
         detail: {
@@ -195,240 +232,344 @@ export const GITHUB_ARRAY_INPUT_TYPES = new Elysia({ prefix: '/input' })
         return scopes;
     }, {
         detail: {
-            description: "",
+            description: "No authentication needed. These are the types of the array properties used in the endpoints.",
             tags: ['github', 'types']
         }
     });
 
 /* PROJECT */
 
+/* <const Name extends string = "jwt", const Schema extends TSchema | undefined = undefined>({ name, secret, alg, crit, schema, nbf, exp, ...payload }: JWTOption<Name, Schema>) => Elysia<"", {
+    request: { [name in Name extends string ? Name : "jwt"]: {
+        readonly sign: (morePayload: UnwrapSchema<Schema, Record<string, string | number>> & JWTPayloadSpec) => Promise<string>;
+        readonly verify: (jwt?: string) => Promise<false | (UnwrapSchema<Schema, Record<string, string | number>> & JWTPayloadSpec)>;
+    }; } extends infer T ? { [K in keyof T]: { [name in Name extends string ? Name : "jwt"]: {
+        readonly sign: (morePayload: UnwrapSchema<Schema, Record<string, string | number>> & JWTPayloadSpec) => Promise<string>;
+        readonly verify: (jwt?: string) => Promise<false | (UnwrapSchema<Schema, Record<string, string | number>> & JWTPayloadSpec)>;
+    }; }[K]; } : never;
+    store: {};
+    derive: {};
+    resolve: {};
+}, {
+    type: {};
+    error: {};
+}, {}, {}, {}, false> */
+interface TokenVerifier {
+    verify(bearer: string | undefined): Promise<any>;
+}
+
+export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: string | undefined, set: Context["set"]) {
+    const payloadPromise = realm.verify(bearer);
+    const payload = await payloadPromise;
+
+    if (!payload) {
+        set.status = 401;
+        set.headers[
+            'WWW-Authenticate'
+        ] = `Bearer realm='${JWT_REALM}', error="invalid_token"`;
+
+        return 'Unauthorized'
+    }
+
+    return {
+        payload: payload
+    }
+}
+
+async function resolveJwtPayload<T extends TokenVerifier>(realm: T, authorization: string | undefined, set: Context["set"]) {
+    if (!authorization) {
+        set.status = 400;
+        set.headers[
+            'WWW-Authenticate'
+        ] = `Bearer realm='${JWT_REALM}', error="invalid_request"`;
+
+        return {
+            payload: null
+        }
+    }
+
+    const bearer = authorization?.split(' ')[1]; // Authorization: Bearer <token>
+    const jwt = await getJwtPayload<typeof realm>(realm, bearer, set);
+    if (typeof jwt === 'string') {
+        return null;
+    }
+
+    return {
+        fetchParams: {
+            ...getFetchParams(jwt)
+        }
+    }
+}
+
+function getFetchParams(jwt: any) {
+    const auth_type = jwt?.payload?.token ? GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN : GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP;
+    const installation_id: number = jwt?.payload?.installation_id;
+    const token: string = jwt?.payload?.token;
+    const auth = auth_type === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP && installation_id ? installation_id : token;
+
+    return {
+        auth_type,
+        auth
+    };
+}
+
 export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
-    .group("/:login_name/projects/:project_id", (app) => app
-        .get('/infos', async ({ params: { login_name, project_id }, set }) => {
-            const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                GITHUB_PROJECT_INFO(login_name, project_id),
-                GITHUB_PAT,
-                set
-            );
-
-            return JSON.stringify(response, null, 2);
-        }, {
-            params: t.Object(GITHUB_PROJECT_PARAMS),
-            detail: {
-                description: "",
-                tags: ['github', 'projects']
-            }
+    .use(guardEndpoints(new Elysia()
+        .use(GITHUB_JWT)
+        .resolve(async ({ propromoRestAdaptersGithub, headers: { authorization }, set }) => {
+            return resolveJwtPayload<typeof propromoRestAdaptersGithub>(propromoRestAdaptersGithub, authorization, set);
         })
-        .get('/repositories', async ({ params: { login_name, project_id }, set }) => {
-            const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                GITHUB_PROJECT_REPOSITORIES(login_name, project_id),
-                GITHUB_PAT,
-                set
-            );
-
-            return JSON.stringify(response, null, 2);
-        }, {
-            params: t.Object(GITHUB_PROJECT_PARAMS),
-            detail: {
-                description: "",
-                tags: ['github', 'repositories']
-            }
+        .onBeforeHandle(({ fetchParams }) => {
+            if (!fetchParams) return "Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.";
         })
-        .get('/repositories/scoped', async ({ params: { login_name, project_id }, query, set }) => {
-            const parsedScopes = parseScopedRepositories(query.scope, set);
-
-            if (Array.isArray(parsedScopes)) {
+        .group("/:login_name/projects/:project_id", (app) => app
+            .get('/infos', async ({ fetchParams, params: { login_name, project_id }, set }) => {
                 const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                    GITHUB_PROJECT_REPOSITORIES_AND_QUERY(login_name, project_id, parsedScopes),
-                    GITHUB_PAT,
-                    set
+                    GITHUB_PROJECT_INFO(login_name, project_id),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
                 );
 
                 return JSON.stringify(response, null, 2);
-            } else {
-                return JSON.stringify(parsedScopes, null, 2);
-            }
-        }, {
-            params: t.Object(GITHUB_PROJECT_PARAMS),
-            query: t.Object(GITHUB_REPOSITORY_SCOPE_QUERY),
-            detail: {
-                description: "",
-                tags: ['github', 'repositories', 'scoped']
-            }
-        })
-        .get('/repositories/milestones/:milestone_id', async ({ params: { login_name, project_id, milestone_id }, query, set }) => {
-            const parsedDepthAndIssueStates = parseMilestoneDepthAndIssueStates(query.depth, query.issue_states, set);
-
-            if ('depth' in parsedDepthAndIssueStates && 'issue_states' in parsedDepthAndIssueStates) {
-                const { depth, issue_states } = parsedDepthAndIssueStates;
-
+            }, {
+                params: t.Object(GITHUB_PROJECT_PARAMS),
+                detail: {
+                    description: "",
+                    tags: ['github', 'projects']
+                }
+            })
+            .get('/repositories', async ({ fetchParams, params: { login_name, project_id }, set }) => {
                 const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                    GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY(login_name, project_id, milestone_id, depth, issue_states),
-                    GITHUB_PAT,
-                    set
+                    GITHUB_PROJECT_REPOSITORIES(login_name, project_id),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
                 );
 
                 return JSON.stringify(response, null, 2);
-            } else {
-                return JSON.stringify(parsedDepthAndIssueStates, null, 2);
-            }
-        }, {
-            params: t.Object(GITHUB_PROJECT_MILESTONE_PARAMS),
-            query: t.Object(GITHUB_MILESTONE_QUERY),
-            detail: {
-                description: "",
-                tags: ['github', 'milestone', 'scoped']
-            }
-        })
+            }, {
+                params: t.Object(GITHUB_PROJECT_PARAMS),
+                detail: {
+                    description: "",
+                    tags: ['github', 'repositories']
+                }
+            })
+            .get('/repositories/scoped', async ({ fetchParams, params: { login_name, project_id }, query, set }) => {
+                const parsedScopes = parseScopedRepositories(query.scope, set);
 
-        .get('', async ({ params: { login_name, project_id }, set }) => {
-            const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                GITHUB_DEFAULT_PROJECT(login_name, project_id, -1),
-                GITHUB_PAT,
-                set
-            );
+                if (Array.isArray(parsedScopes)) {
+                    const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
+                        GITHUB_PROJECT_REPOSITORIES_AND_QUERY(login_name, project_id, parsedScopes),
+                        fetchParams!.auth!,
+                        set,
+                        fetchParams!.auth_type!
+                    );
 
-            return JSON.stringify(response, null, 2);
-        }, {
-            params: t.Object(GITHUB_PROJECT_PARAMS),
-            detail: {
-                description: "",
-                tags: ['github', 'projects']
-            }
-        })
-        .get('/views/:project_view', async ({ params: { login_name, project_id, project_view }, set }) => {
-            const view = validateViewParameter(project_view);
+                    return JSON.stringify(response, null, 2);
+                } else {
+                    return JSON.stringify(parsedScopes, null, 2);
+                }
+            }, {
+                params: t.Object(GITHUB_PROJECT_PARAMS),
+                query: t.Object(GITHUB_REPOSITORY_SCOPE_QUERY),
+                detail: {
+                    description: "",
+                    tags: ['github', 'repositories', 'scoped']
+                }
+            })
+            .get('/repositories/milestones/:milestone_id', async ({ fetchParams, params: { login_name, project_id, milestone_id }, query, set }) => {
+                const parsedDepthAndIssueStates = parseMilestoneDepthAndIssueStates(query.depth, query.issue_states, set);
 
-            const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                GITHUB_DEFAULT_PROJECT(login_name, project_id, view),
-                GITHUB_PAT,
-                set
-            );
+                if ('depth' in parsedDepthAndIssueStates && 'issue_states' in parsedDepthAndIssueStates) {
+                    const { depth, issue_states } = parsedDepthAndIssueStates;
 
-            return JSON.stringify(response, null, 2);
-        }, {
-            params: t.Object(GITHUB_PROJECT_VIEWS_PARAMS),
-            detail: {
-                description: "`project_view` has to be greater than 0",
-                tags: ['github', 'views']
-            }
-        }),
-    );
+                    const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
+                        GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY(login_name, project_id, milestone_id, depth, issue_states),
+                        fetchParams!.auth!,
+                        set,
+                        fetchParams!.auth_type!
+                    );
+
+                    return JSON.stringify(response, null, 2);
+                } else {
+                    return JSON.stringify(parsedDepthAndIssueStates, null, 2);
+                }
+            }, {
+                params: t.Object(GITHUB_PROJECT_MILESTONE_PARAMS),
+                query: t.Object(GITHUB_MILESTONE_QUERY),
+                detail: {
+                    description: "",
+                    tags: ['github', 'milestone', 'scoped']
+                }
+            })
+
+            .get('', async ({ fetchParams, params: { login_name, project_id }, set }) => {
+                const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
+                    GITHUB_DEFAULT_PROJECT(login_name, project_id, -1),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
+                );
+
+                return JSON.stringify(response, null, 2);
+            }, {
+                params: t.Object(GITHUB_PROJECT_PARAMS),
+                detail: {
+                    description: "",
+                    tags: ['github', 'projects']
+                }
+            })
+            .get('/views/:project_view', async ({ fetchParams, params: { login_name, project_id, project_view }, set }) => {
+                const view = validateViewParameter(project_view);
+
+                const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
+                    GITHUB_DEFAULT_PROJECT(login_name, project_id, view),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
+                );
+
+                return JSON.stringify(response, null, 2);
+            }, {
+                params: t.Object(GITHUB_PROJECT_VIEWS_PARAMS),
+                detail: {
+                    description: "`project_view` has to be greater than 0",
+                    tags: ['github', 'views']
+                }
+            })
+        )
+    ));
 
 export const GITHUB_USERS = new Elysia({ prefix: '/users' })
-    .group("/:login_name/projects/:project_id", (app) => app
-        .get('/infos', async ({ params: { login_name, project_id }, set }) => {
-            const response = await fetchGithubDataUsingGraphql<{ user: User }>(
-                GITHUB_PROJECT_INFO(login_name, project_id, "user"),
-                GITHUB_PAT,
-                set
-            );
-
-            return JSON.stringify(response, null, 2);
-        }, {
-            params: t.Object(GITHUB_PROJECT_PARAMS),
-            detail: {
-                description: "",
-                tags: ['github', 'projects']
-            }
+    .use(guardEndpoints(new Elysia()
+        .use(GITHUB_JWT)
+        .resolve(async ({ propromoRestAdaptersGithub, headers: { authorization }, set }) => {
+            return resolveJwtPayload<typeof propromoRestAdaptersGithub>(propromoRestAdaptersGithub, authorization, set);
         })
-        .get('/repositories', async ({ params: { login_name, project_id }, set }) => {
-            const response = await fetchGithubDataUsingGraphql<{ user: User }>(
-                GITHUB_PROJECT_REPOSITORIES(login_name, project_id, "user"),
-                GITHUB_PAT,
-                set
-            );
-
-            return JSON.stringify(response, null, 2);
-        }, {
-            params: t.Object(GITHUB_PROJECT_PARAMS),
-            detail: {
-                description: "",
-                tags: ['github', 'repositories']
-            }
+        .onBeforeHandle(({ fetchParams }) => {
+            if (!fetchParams) return "Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.";
         })
-        .get('/repositories/scoped', async ({ params: { login_name, project_id }, query, set }) => {
-            const parsedScopes = parseScopedRepositories(query.scope, set);
-
-            if (Array.isArray(parsedScopes)) {
+        .group("/:login_name/projects/:project_id", (app) => app
+            .get('/infos', async ({ fetchParams, params: { login_name, project_id }, set }) => {
                 const response = await fetchGithubDataUsingGraphql<{ user: User }>(
-                    GITHUB_PROJECT_REPOSITORIES_AND_QUERY(login_name, project_id, parsedScopes, "user"),
-                    GITHUB_PAT,
-                    set
+                    GITHUB_PROJECT_INFO(login_name, project_id, "user"),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
                 );
 
                 return JSON.stringify(response, null, 2);
-            } else {
-                return JSON.stringify(parsedScopes, null, 2);
-            }
-        }, {
-            params: t.Object(GITHUB_PROJECT_PARAMS),
-            query: t.Object(GITHUB_REPOSITORY_SCOPE_QUERY),
-            detail: {
-                description: "",
-                tags: ['github', 'repositories', 'scoped']
-            }
-        })
-        .get('/repositories/milestones/:milestone_id', async ({ params: { login_name, project_id, milestone_id }, query, set }) => {
-            const parsedDepthAndIssueStates = parseMilestoneDepthAndIssueStates(query.depth, query.issue_states, set);
-
-            if ('depth' in parsedDepthAndIssueStates && 'issue_states' in parsedDepthAndIssueStates) {
-                const { depth, issue_states } = parsedDepthAndIssueStates;
-
+            }, {
+                params: t.Object(GITHUB_PROJECT_PARAMS),
+                detail: {
+                    description: "",
+                    tags: ['github', 'projects']
+                }
+            })
+            .get('/repositories', async ({ fetchParams, params: { login_name, project_id }, set }) => {
                 const response = await fetchGithubDataUsingGraphql<{ user: User }>(
-                    GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY(login_name, project_id, milestone_id, depth, issue_states, "user"),
-                    GITHUB_PAT,
-                    set
+                    GITHUB_PROJECT_REPOSITORIES(login_name, project_id, "user"),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
                 );
 
                 return JSON.stringify(response, null, 2);
-            } else {
-                return JSON.stringify(parsedDepthAndIssueStates, null, 2);
-            }
-        }, {
-            params: t.Object(GITHUB_PROJECT_MILESTONE_PARAMS),
-            query: t.Object(GITHUB_MILESTONE_QUERY),
-            detail: {
-                description: "",
-                tags: ['github', 'milestone', 'scoped']
-            }
-        })
+            }, {
+                params: t.Object(GITHUB_PROJECT_PARAMS),
+                detail: {
+                    description: "",
+                    tags: ['github', 'repositories']
+                }
+            })
+            .get('/repositories/scoped', async ({ fetchParams, params: { login_name, project_id }, query, set }) => {
+                const parsedScopes = parseScopedRepositories(query.scope, set);
 
-        .get('', async ({ params: { login_name, project_id }, set }) => {
-            const response = await fetchGithubDataUsingGraphql<{ user: User }>(
-                GITHUB_DEFAULT_PROJECT(login_name, project_id, -1, "user"),
-                GITHUB_PAT,
-                set
-            );
+                if (Array.isArray(parsedScopes)) {
+                    const response = await fetchGithubDataUsingGraphql<{ user: User }>(
+                        GITHUB_PROJECT_REPOSITORIES_AND_QUERY(login_name, project_id, parsedScopes, "user"),
+                        fetchParams!.auth,
+                        set,
+                        fetchParams!.auth_type!
+                    );
 
-            return JSON.stringify(response, null, 2);
-        }, {
-            params: t.Object(GITHUB_PROJECT_PARAMS),
-            detail: {
-                description: "",
-                tags: ['github', 'projects']
-            }
-        })
-        .get('/views/:project_view', async ({ params: { login_name, project_id, project_view }, set }) => {
-            const view = validateViewParameter(project_view);
+                    return JSON.stringify(response, null, 2);
+                } else {
+                    return JSON.stringify(parsedScopes, null, 2);
+                }
+            }, {
+                params: t.Object(GITHUB_PROJECT_PARAMS),
+                query: t.Object(GITHUB_REPOSITORY_SCOPE_QUERY),
+                detail: {
+                    description: "",
+                    tags: ['github', 'repositories', 'scoped']
+                }
+            })
+            .get('/repositories/milestones/:milestone_id', async ({ fetchParams, params: { login_name, project_id, milestone_id }, query, set }) => {
+                const parsedDepthAndIssueStates = parseMilestoneDepthAndIssueStates(query.depth, query.issue_states, set);
 
-            const response = await fetchGithubDataUsingGraphql<{ user: User }>(
-                GITHUB_DEFAULT_PROJECT(login_name, project_id, view, "user"),
-                GITHUB_PAT,
-                set
-            );
+                if ('depth' in parsedDepthAndIssueStates && 'issue_states' in parsedDepthAndIssueStates) {
+                    const { depth, issue_states } = parsedDepthAndIssueStates;
 
-            return JSON.stringify(response, null, 2);
-        }, {
-            params: t.Object(GITHUB_PROJECT_VIEWS_PARAMS),
-            detail: {
-                description: "`project_view` has to be greater than 0",
-                tags: ['github', 'views']
-            }
-        }),
-    );
+                    const response = await fetchGithubDataUsingGraphql<{ user: User }>(
+                        GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY(login_name, project_id, milestone_id, depth, issue_states, "user"),
+                        fetchParams!.auth,
+                        set,
+                        fetchParams!.auth_type!
+                    );
 
-/* ORGANIZATION (TESTING) */
+                    return JSON.stringify(response, null, 2);
+                } else {
+                    return JSON.stringify(parsedDepthAndIssueStates, null, 2);
+                }
+            }, {
+                params: t.Object(GITHUB_PROJECT_MILESTONE_PARAMS),
+                query: t.Object(GITHUB_MILESTONE_QUERY),
+                detail: {
+                    description: "",
+                    tags: ['github', 'milestone', 'scoped']
+                }
+            })
+
+            .get('', async ({ fetchParams, params: { login_name, project_id }, set }) => {
+                const response = await fetchGithubDataUsingGraphql<{ user: User }>(
+                    GITHUB_DEFAULT_PROJECT(login_name, project_id, -1, "user"),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
+                );
+
+                return JSON.stringify(response, null, 2);
+            }, {
+                params: t.Object(GITHUB_PROJECT_PARAMS),
+                detail: {
+                    description: "",
+                    tags: ['github', 'projects']
+                }
+            })
+            .get('/views/:project_view', async ({ fetchParams, params: { login_name, project_id, project_view }, set }) => {
+                const view = validateViewParameter(project_view);
+
+                const response = await fetchGithubDataUsingGraphql<{ user: User }>(
+                    GITHUB_DEFAULT_PROJECT(login_name, project_id, view, "user"),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
+                );
+
+                return JSON.stringify(response, null, 2);
+            }, {
+                params: t.Object(GITHUB_PROJECT_VIEWS_PARAMS),
+                detail: {
+                    description: "`project_view` has to be greater than 0",
+                    tags: ['github', 'views']
+                }
+            }),
+        )
+    ));
+
+/* ORGANIZATION (TESTING), no auth needed, just use the test token */
 
 const GITHUB_ORGANIZATION = new Elysia({ prefix: '/organization' })
     .group("/:login_name", (app) => app
