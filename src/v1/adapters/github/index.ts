@@ -1,6 +1,5 @@
 import { Organization, Repository, User } from "@octokit/graphql-schema"; // https://www.npmjs.com/package/@octokit/graphql-schema
 import { Elysia, t } from "elysia"; // https://elysiajs.com/introduction.html
-import 'dotenv/config'; // process.env.<ENV_VAR_NAME>
 import {
     // PROJECT
     GITHUB_DEFAULT_PROJECT,
@@ -17,6 +16,9 @@ import {
 import { fetchGithubDataUsingGraphql, validateViewParameter, parseMilestoneDepthAndIssueStates, parseScopedRepositories } from "./github_functions";
 import { /* GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,  */GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES } from "./github_types";
 import { createPinoLogger } from '@bogeychan/elysia-logger'; // https://github.com/bogeychan/elysia-logger/issues/3
+import bearer from '@elysiajs/bearer';
+import jwt from '@elysiajs/jwt';
+import { JWT_REALM } from "./github_globals";
 
 const log = createPinoLogger();
 
@@ -66,10 +68,100 @@ export const GITHUB_APP_WEBHOOK = new Elysia({ prefix: '/webhooks' })
 
 /* APP AUTHENTICATION WEBHOOK */
 
-export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth/app' })
-    .post('', async ({ body }) => {
-        return body;
+export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
+    .use(bearer())
+    .use(
+        jwt({
+            name: JWT_REALM,
+            secret: process.env.JWT_SECRET!,
+            alg: "HS256", /* alt: RS256 */
+            iss: "propromo",
+            typ: "JWT"
+        })
+    )
+    .post('/app', async ({ set, body, propromoRestAdaptersGithub }) => {
+        const code = (body?.code && body.code.length > 0)
+            ? body.code
+            : null;
+        const installation_id = (body?.installation_id && body.installation_id.length > 0)
+            ? body.installation_id
+            : null;
+        const setup_action = (body?.setup_action && body.setup_action.length > 0)
+            ? body.setup_action
+            : null; // type=install
+
+        if (!code || !installation_id || !setup_action || setup_action !== 'install') {
+            set.status = 400;
+            set.headers[
+                'WWW-Authenticate'
+            ] = `Bearer realm='${JWT_REALM}', error="invalid_request"`;
+
+            return 'Invalid request';
+        }
+
+        const bearerTokenPromise = propromoRestAdaptersGithub.sign({
+            code: code,
+            installation_id: installation_id,
+            setup_action: setup_action,
+            iat: Math.floor(Date.now() / 1000) - 60,
+            /* exp: Math.floor(Date.now() / 1000) + (10 * 60) */
+        })
+        const bearerToken = await bearerTokenPromise;
+
+        // TODO: test if app is valid at `propromo-software/demo`
+
+        if (!bearerToken) {
+            set.status = 401;
+            set.headers[
+                'WWW-Authenticate'
+            ] = `Bearer realm='${JWT_REALM}', error="invalid_token"`;
+
+            return 'Unauthorized';
+        }
+
+        return bearerToken;
     }, {
+        body: t.Object({
+            code: t.String(),
+            installation_id: t.String(),
+            setup_action: t.Const("install")
+        }),
+        detail: {
+            description: "",
+            tags: ['github', 'authentication']
+        }
+    })
+    .post('/token', async ({ bearer }) => bearer, {
+        async beforeHandle({ propromoRestAdaptersGithub, bearer, set }) {
+            const token = bearer;
+
+            if (!token) {
+                set.status = 400
+                set.headers[
+                    'WWW-Authenticate'
+                ] = `Bearer realm='${JWT_REALM}', error="invalid_request"`
+
+                return 'Invalid request'
+            }
+
+            const bearerTokenPromise = propromoRestAdaptersGithub.sign({
+                token: token
+            })
+            const bearerToken = await bearerTokenPromise;
+
+            // TODO: test if token works at `propromo-software/demo`
+
+            if (!bearerToken) {
+                set.status = 401;
+                set.headers[
+                    'WWW-Authenticate'
+                ] = `Bearer realm='${JWT_REALM}', error="invalid_token"`;
+
+                return 'Unauthorized';
+            }
+
+            return bearerToken;
+        },
         detail: {
             description: "",
             tags: ['github', 'authentication']

@@ -5,6 +5,7 @@ import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/
 import { CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { V1 } from "./v1";
 import { type InferContext, logger } from '@bogeychan/elysia-logger';
+// ENV VARIABLES: process.env.<ENV_VAR_NAME>
 
 const app: Elysia = new Elysia()
   .use(staticPlugin({

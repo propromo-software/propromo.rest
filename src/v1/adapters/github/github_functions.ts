@@ -11,7 +11,6 @@ import {
     GraphqlResponse,
     GraphqlResponseErrorCode
 } from "./github_types";
-import 'dotenv/config'; // process.env.<ENV_VAR_NAME>
 import { octokitApp } from "./github_app";
 import { GITHUB_API_HEADERS } from "./github_globals";
 
