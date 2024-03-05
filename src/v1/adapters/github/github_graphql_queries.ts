@@ -14,7 +14,7 @@ const GITHUB_REPOSITORY = function (amount: GRAMMATICAL_NUMBER, owner?: string, 
         `;
     let repositoryQueryEnd = `}`;
     if (amount === GRAMMATICAL_NUMBER.SINGULAR && owner && name) {
-        repositoryQueryStart = `repository(owner: "${owner}", name: "${name}") {`; 
+        repositoryQueryStart = `repository(owner: "${owner}", name: "${name}") {`;
         repositoryQueryEnd = ``;
     }
 
@@ -146,8 +146,8 @@ const GITHUB_PROJECT_REPOSITORIES_SCOPED = function (scopes: GITHUB_REPOSITORY_S
         repositories(first: 10) {
             ${scopes.includes(GITHUB_REPOSITORY_SCOPES.COUNT) ? "totalCount" : ""}
             nodes {
-                ${scopes.includes(GITHUB_REPOSITORY_SCOPES.INFO) ? `
                 name
+                ${scopes.includes(GITHUB_REPOSITORY_SCOPES.INFO) ? `
                 description
                 updatedAt
                 createdAt
@@ -167,7 +167,7 @@ const GITHUB_PROJECT_REPOSITORIES_SCOPED = function (scopes: GITHUB_REPOSITORY_S
                 ${scopes.includes(GITHUB_REPOSITORY_SCOPES.VULNERABILITIES) ? vulnerabilities : ""}
                 ${scopes.includes(GITHUB_REPOSITORY_SCOPES.RELEASES) ? releases : ""}
                 ${scopes.includes(GITHUB_REPOSITORY_SCOPES.DEPLOYMENTS) ? deployments : ""}
-                ${scopes.includes(GITHUB_REPOSITORY_SCOPES.MILESTONES) ? milestones : ""}
+                ${scopes.includes(GITHUB_REPOSITORY_SCOPES.ISSUES) || scopes.includes(GITHUB_REPOSITORY_SCOPES.MILESTONES) ? milestones : ""}
             }
         }
         `;
@@ -207,7 +207,7 @@ const GITHUB_PROJECT = function (amount: GRAMMATICAL_NUMBER, name?: string | num
 
     if (view === -1) {
         view = 10;
-        
+
         viewQuery = `
         views(first: ${view}) {
             totalCount
@@ -350,9 +350,9 @@ export const GITHUB_PROJECT_REPOSITORIES = function (login_name: string, project
     return `{
         ${login_type}(login: "${login_name}") {
             ${GITHUB_PROJECT_SCOPED(project_id, {
-                project_scopes: [GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED],
-                repository_scopes: [GITHUB_REPOSITORY_SCOPES.ALL]
-            })}
+        project_scopes: [GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED],
+        repository_scopes: [GITHUB_REPOSITORY_SCOPES.ALL]
+    })}
         }
     }`
 }
@@ -363,14 +363,15 @@ export const GITHUB_PROJECT_REPOSITORIES = function (login_name: string, project
  */
 export const GITHUB_PROJECT_REPOSITORIES_AND_QUERY = function (login_name: string, project_id: number, repository_scopes: GITHUB_REPOSITORY_SCOPES[] | null, login_type: string = "organization") {
     // every projects items are stored in the repositories it is connected to
+
     return `{
-        ${login_type}(login: "${login_name}") {
-            ${GITHUB_PROJECT_SCOPED(project_id, {
-                project_scopes: [GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED],
-                repository_scopes: repository_scopes
-            })}
-        }
-    }`
+            ${login_type}(login: "${login_name}") {
+                ${GITHUB_PROJECT_SCOPED(project_id, {
+        project_scopes: [GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED],
+        repository_scopes: repository_scopes
+    })}
+            }
+        }`;
 }
 
 /**
@@ -378,7 +379,7 @@ export const GITHUB_PROJECT_REPOSITORIES_AND_QUERY = function (login_name: strin
  * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/repositories/milestones?depth=<MILESTONE_DEPTH>&issue_states=<ISSUE_STATES>``
  */
 export const GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY = function (
-    login_name: string, project_id: number, milestone_id: number, 
+    login_name: string, project_id: number, milestone_id: number,
     depth: GITHUB_MILESTONES_DEPTH[], issue_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null,
     login_type: string = "organization") {
     // every projects items are stored in the repositories it is connected to
@@ -386,7 +387,7 @@ export const GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY = function (
     const return_node_root_infos = depth.includes(GITHUB_MILESTONES_DEPTH.INFO);
     const return_node_issues = depth.includes(GITHUB_MILESTONES_DEPTH.ISSUES);
     const issue_states_string_uppercase = issue_states ? issue_states.map((state) => state.toUpperCase()).join('", "') : null;
-    
+
     return `{
         ${login_type}(login: "${login_name}") {
             projectV2(number: ${project_id}) {
@@ -453,7 +454,7 @@ export const GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY = function (
 
 /* Testing functions: */
 
-export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) { 
+export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) {
     return `{
         organization(login: "${login_name}") {
             login
