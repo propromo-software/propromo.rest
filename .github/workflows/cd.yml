@@ -39,21 +39,28 @@ jobs:
             propromo/rest-microservice:latest
             ghcr.io/${{ github.repository_owner }}/propromo-rest-microservice:latest
 
-      - name: Get latest tag
+      - name: Get latest release tag
         id: get_latest_tag
         run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0)
-          echo "latest_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          if git for-each-ref --sort=-v:refname --format='%(refname:short)' refs/tags | grep -q '^[0-9]\+\.[0-9]\+\.[0-9]\+-[9]\+\.[0-9]\+$'; then
+            LATEST_TAG=$(git describe --tags --abbrev=0)
+            echo "latest_tag=${LATEST_TAG}" >> $GITHUB_ENV
+          else
+            TAG=$(date +"%Y.%m.%d.1")
+            echo "latest_tag=${TAG}" >> $GITHUB_ENV
+          fi
 
+      # https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands
       - name: Generate release tag
         id: generate_release_tag
         run: |
           if [[ -z "${latest_tag}" ]]; then
-            TAG=$(date +"%Y.%m.%d.%H%M%S")
+            TAG=$(date +"%Y.%m.%d.1")
           else
-            TAG=$(echo "${latest_tag}" | awk -F. '{print $1"."$2"."$3"."($4+1)}')
+            IFS='.' read -r YYYY MM DD I <<< "${latest_tag%.*}"
+            TAG="${YYYY}.${MM}.${DD}.$((I+1))"
           fi
-          echo "TAG=${TAG}" >> $GITHUB_ENV
+          echo "next_release_tag=${TAG}" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create_release
@@ -62,8 +69,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag: ${{ steps.generate_release_tag.outputs.next_release_tag }}
-          name: Release ${{ github.sha }}
-          body: Release for commit '${{ github.event.workflow_run.head_commit.message }}'
+          name: Release ${{ steps.generate_release_tag.outputs.next_release_tag }}
+          generateReleaseNotes: true
           draft: false
           prerelease: true
           makeLatest: true
