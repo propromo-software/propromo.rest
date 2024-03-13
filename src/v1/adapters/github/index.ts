@@ -17,8 +17,7 @@ import { fetchGithubDataUsingGraphql, validateViewParameter, parseMilestoneDepth
 import { GITHUB_AUTHENTICATION_STRATEGY_OPTIONS, GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES } from "./github_types";
 import { createPinoLogger } from '@bogeychan/elysia-logger'; // https://github.com/bogeychan/elysia-logger/issues/3
 import bearer from '@elysiajs/bearer';
-import jwt from '@elysiajs/jwt';
-import { JWT_REALM } from "./github_globals";
+import { GITHUB_JWT, GITHUB_JWT_REALM } from "./github_globals";
 
 const log = createPinoLogger();
 
@@ -47,18 +46,6 @@ const GITHUB_MILESTONE_QUERY = {
     issue_states: t.String(),
 } as const;
 
-/* JWT */
-
-export const GITHUB_JWT = new Elysia()
-    .use(
-        jwt({
-            name: JWT_REALM,
-            secret: process.env.JWT_SECRET!,
-            alg: "HS256", /* alt: RS256 */
-            iss: "propromo"
-        })
-    )
-
 /* GUARDED ENDPOINTS */
 
 const guardEndpoints = (endpoints: Elysia) => new Elysia({
@@ -74,7 +61,7 @@ const guardEndpoints = (endpoints: Elysia) => new Elysia({
                     set.status = 400
                     set.headers[
                         'WWW-Authenticate'
-                    ] = `Bearer realm='${JWT_REALM}', error="invalid_request"`
+                    ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`
 
                     return 'Unauthorized'
                 }
@@ -123,7 +110,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             set.status = 400;
             set.headers[
                 'WWW-Authenticate'
-            ] = `Bearer realm='${JWT_REALM}', error="invalid_request"`;
+            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`;
 
             return 'Invalid request';
         }
@@ -143,7 +130,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             set.status = 401;
             set.headers[
                 'WWW-Authenticate'
-            ] = `Bearer realm='${JWT_REALM}', error="invalid_token"`;
+            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
 
             return 'Unauthorized';
         }
@@ -176,7 +163,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
                 set.status = 400
                 set.headers[
                     'WWW-Authenticate'
-                ] = `Bearer realm='${JWT_REALM}', error="invalid_request"`
+                ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`
 
                 return 'Invalid request'
             }
@@ -192,7 +179,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
                 set.status = 401;
                 set.headers[
                     'WWW-Authenticate'
-                ] = `Bearer realm='${JWT_REALM}', error="invalid_token"`;
+                ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
 
                 return 'Unauthorized';
             }
@@ -266,7 +253,7 @@ export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: s
         set.status = 401;
         set.headers[
             'WWW-Authenticate'
-        ] = `Bearer realm='${JWT_REALM}', error="invalid_token"`;
+        ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
 
         return 'Unauthorized'
     }
@@ -281,7 +268,7 @@ async function resolveJwtPayload<T extends TokenVerifier>(realm: T, authorizatio
         set.status = 400;
         set.headers[
             'WWW-Authenticate'
-        ] = `Bearer realm='${JWT_REALM}', error="invalid_request"`;
+        ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`;
 
         return {
             payload: null

@@ -15,10 +15,14 @@
     "@elysiajs/swagger": "^0.8.3",
     "@octokit/graphql-schema": "^14.47.1",
     "elysia": "latest",
+    "heroku": "^8.10.0",
     "octokit": "^3.1.2"
   },
   "devDependencies": {
     "bun-types": "latest"
   },
-  "module": "src/index.js"
+  "module": "src/index.js",
+  "engines": {
+		"node": ">=14"
+	}
 }
