@@ -2,14 +2,15 @@ import { Elysia } from "elysia"; // https://elysiajs.com/introduction.html
 import { cors } from '@elysiajs/cors'; // https://elysiajs.com/plugins/cors.html
 import { html } from '@elysiajs/html'; // https://elysiajs.com/plugins/html.html
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
+import { type InferContext, logger } from '@bogeychan/elysia-logger'; // https://www.npmjs.com/package/@bogeychan/elysia-logger
+
 import { CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
-import { V1 } from "./v1";
-import { type InferContext, logger } from '@bogeychan/elysia-logger';
-// ENV VARIABLES: process.env.<ENV_VAR_NAME>
+import { V0 } from "./v0";
+import { v1 } from "./v1";
 
 // @ts-ignore
 const app: Elysia = new Elysia()
-  .use(staticPlugin({
+  .use(staticPlugin({ // serve static files from the "static" directory
     assets: "static",
     prefix: "/"
   }))
@@ -33,6 +34,7 @@ const app: Elysia = new Elysia()
   )
   .use(html())
   .use(ROOT_ROUTES)
+
   // VERSIONS
   .group(SWAGGER_PATH, (app) => app // if no version is specified, redirect to the latest version
     .get('', async ({ set }) => {
@@ -48,9 +50,11 @@ const app: Elysia = new Elysia()
       }
     })
   )
-  .use(V1)
+  .use(V0)
+  .use(v1)
+
   .listen(process.env.PORT || 3000);
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
 );

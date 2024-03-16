@@ -30,3 +30,7 @@ heroku container:push web
 # deploy the container to heroku using the pushed image
 heroku container:release web
 ```
+
+#### Environment variables
+
+`process.env.<ENV_VAR_NAME>`

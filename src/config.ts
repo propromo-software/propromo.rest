@@ -1,22 +1,57 @@
 import { Elysia } from "elysia";
 
-export const LATEST_MAJOR_VERSION = "v1";
+// General settings
+export const DEV_MODE = process?.env?.DEV_MODE === "true";
+
+// API settings
+export const V0_PATH = "v0";
+export const V1_PATH = "v1";
+export const LATEST_MAJOR_VERSION = V1_PATH;
 export const SWAGGER_PATH = "api";
-export const SWAGGER_PATH_EXCLUDE = [
-    `/${LATEST_MAJOR_VERSION}/${SWAGGER_PATH}`
-];
 export const LATEST_SWAGGER_PATH = `${LATEST_MAJOR_VERSION}/${SWAGGER_PATH}`;
+export const V0_SWAGGER_PATH = `${V0_PATH}/${SWAGGER_PATH}`;
+export const V1_SWAGGER_PATH = `${V1_PATH}/${SWAGGER_PATH}`;
+export const SWAGGER_PATH_EXCLUDE = [
+    `/${V1_PATH}/${SWAGGER_PATH}`,
+    `/${V0_PATH}/${SWAGGER_PATH}`
+];
+
+// Home Page URLs
 export const HOME_URLS = {
     "api": {
         "swagger": {
             "url": LATEST_SWAGGER_PATH,
-            "name": "Swagger RestApi Docs"
+            "name": "Swagger RestApi Docs [LATEST]",
+            "versions": {
+                "url": {
+                    "v0": `${V0_SWAGGER_PATH}`,
+                    "v1": `${V1_SWAGGER_PATH}`
+                },
+                "name": {
+                    "v0": "dev/testing",
+                    "v1": "latest/production"
+                }
+            }
         },
         "download": {
             "url": `${LATEST_SWAGGER_PATH}/json`,
-            "name": "Swagger RestApi OpenAPI Spec",
+            "name": "Swagger RestApi OpenAPI Spec [LATEST]",
             "file": "propromo-rest-openapi-spec.json",
-            "action": "download"
+            "action": "download",
+            "versions": {
+                "url": {
+                    "v0": `${V0_SWAGGER_PATH}/json`,
+                    "v1": `${V1_SWAGGER_PATH}/json`
+                },
+                "name": {
+                    "v0": "dev/testing",
+                    "v1": "latest/production"
+                },
+                "file": {
+                    "v0": "propromo-rest-openapi-spec-v0.json",
+                    "v1": "propromo-rest-openapi-spec-v1.json"
+                }
+            }
         }
     },
     "website": {
@@ -31,13 +66,14 @@ export const HOME_URLS = {
     }
 } as const;
 
-export const DEV_MODE = process?.env?.DEV_MODE === "true";
+// CORS settings for development and production servers
 export const CORS_ORIGINS = [
     HOME_URLS.website.url,
     "https://propromo-d08144c627d3.herokuapp.com",
     DEV_MODE ? "http://localhost:5000" : "https://propromo-ts.vercel.app",
 ]
 
+// Home Page
 export const ROOT = `
 <!DOCTYPE html>
 <html lang='en'>
@@ -54,17 +90,29 @@ export const ROOT = `
       <h2>Routes:</h2>
       <ul>
         <li><a href="${HOME_URLS.api.swagger.url}">${HOME_URLS.api.swagger.name}</a></li>
+        <ol>
+            <li>[v0] ${HOME_URLS.api.swagger.versions.name.v0}: <a href="${HOME_URLS.api.swagger.versions.url.v0}">${HOME_URLS.api.swagger.versions.url.v0}</a></li>
+            <li>[v1] ${HOME_URLS.api.swagger.versions.name.v1}: <a href="${HOME_URLS.api.swagger.versions.url.v1}">${HOME_URLS.api.swagger.versions.url.v1}</a></li>
+        </ol>
         <li><a href="${HOME_URLS.api.download.url}">${HOME_URLS.api.download.name}</a> 
-        (<a href="${HOME_URLS.api.download.url}" download="${HOME_URLS.api.download.file}">${HOME_URLS.api.download.action}</a>)
+            (<a href="${HOME_URLS.api.download.url}" download="${HOME_URLS.api.download.file}">${HOME_URLS.api.download.action}</a>)
         </li>
+        <ol>
+            <li>[v0] ${HOME_URLS.api.download.versions.name.v0}: <a href="${HOME_URLS.api.download.versions.url.v0}">${HOME_URLS.api.download.versions.url.v0}</a>
+                (<a href="${HOME_URLS.api.download.versions.url.v0}" download="${HOME_URLS.api.download.versions.file.v0}">${HOME_URLS.api.download.action}</a>)
+            </li>
+            <li>[v1] ${HOME_URLS.api.download.versions.name.v1}: <a href="${HOME_URLS.api.download.versions.url.v1}">${HOME_URLS.api.download.versions.url.v1}</a>
+                (<a href="${HOME_URLS.api.download.versions.url.v1}" download="${HOME_URLS.api.download.versions.file.v1}">${HOME_URLS.api.download.action}</a>)
+            </li>
+        </ol>
         <li><a href="${HOME_URLS.website.url}">${HOME_URLS.website.name}</a></li>
         <li><a href="${HOME_URLS.apps.github.url}">${HOME_URLS.apps.github.name}</a></li>
       </ul>
     </body>
 </html>`;
 
+// Home Page Routes
 export const ROOT_PATHS = ["/", "/home", "/root", "/start", "/info", "/about", "/links"];
-
 export const ROOT_ROUTES = new Elysia({ prefix: '' });
 ROOT_PATHS.forEach((path) => {
     ROOT_ROUTES.get(path, () => ROOT);
