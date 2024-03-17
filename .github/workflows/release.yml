@@ -1,0 +1,61 @@
+name: Release - Rest Backend Service
+on:
+  workflow_run:
+    workflows: ["Continuous Deployment - Rest Backend Service"]
+    types:
+      - completed
+permissions: write-all
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get latest release tag
+        id: get_latest_tag
+        run: |
+          # LATEST_TAG=$(git ls-remote --tags origin | grep -v '^{}' | grep -v '^{} ' | awk '{print $2}' | sed 's/refs\/tags\///' | sort -V | tail -n 1)
+          git pull --tags
+          LATEST_TAG=$(git tag --sort=-version:refname | head -n 1)
+          if [[ -z "${LATEST_TAG}" ]]; then
+            TAG=$(date +"%Y.%m.%d.1")
+            echo "latest_tag=${TAG}" >> $GITHUB_ENV
+          else
+            echo "latest_tag=${LATEST_TAG}" >> $GITHUB_ENV
+          fi
+
+      - name: Generate release tag
+        id: generate_release_tag
+        run: |
+          if [[ -z "${latest_tag}" ]]; then
+            TAG=$(date +"%Y.%m.%d.1")
+          else
+            IFS='.' read -r YYYY MM DD I <<< "${latest_tag}"
+
+            echo "latest_tag=$latest_tag"
+            echo "YYYY=$YYYY"
+            echo "MM=$MM"
+            echo "DD=$DD"
+            echo "I=$I"
+
+            TAG="${YYYY}.${MM}.${DD}.$((I+1))"
+
+            echo "TAG=$TAG"
+          fi
+          echo "next_release_tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag: ${{ steps.generate_release_tag.outputs.next_release_tag }}
+          name: Release ${{ steps.generate_release_tag.outputs.next_release_tag }}
+          generateReleaseNotes: true
+          draft: false
+          prerelease: true
+          makeLatest: true
