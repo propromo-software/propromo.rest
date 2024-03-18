@@ -70,3 +70,18 @@ export function isValidEnumArray(array: string[], enumValues: string[]): boolean
     }
     return true;
 }
+
+/**
+ * Validates the view parameter and returns a number.
+ *
+ * @param {string | undefined} view_string - the view parameter to validate
+ * @return {number} the validated view parameter as a number, or -1 if invalid
+ */
+export function validateViewParameter(view_string: string | undefined): number {
+    if (view_string === undefined) return -1;
+    if (view_string === "%7Bproject_view%7D") return -1;
+    const view = Number(view_string);
+    if (isNaN(view)) return -1;
+
+    return view;
+}

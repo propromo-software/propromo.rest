@@ -1,7 +1,10 @@
-import { Organization, RateLimit, User } from "@octokit/graphql-schema";
+import { Organization, RateLimit, Repository, User } from "@octokit/graphql-schema";
 import { Elysia, t } from "elysia";
 import {
     GITHUB_DEFAULT_PROJECT,
+    GITHUB_ORGANIZATION_BY_NAME,
+    GITHUB_ORGANIZATION_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_PROJECT_NAME,
+    GITHUB_ORGANIZATION_REPOSITORY_BY_OWNER_NAME_AND_REPOSITORY_NAME,
     GITHUB_PROJECT_INFO,
     GITHUB_PROJECT_REPOSITORIES,
     GITHUB_PROJECT_REPOSITORIES_AND_QUERY,
@@ -9,7 +12,7 @@ import {
     GITHUB_QUOTA
 } from "./graphql";
 import { GITHUB_REPOSITORY_PARAMS, GITHUB_MILESTONE_PARAMS } from "./params";
-import { parseMilestoneDepthAndIssueStates, parseScopedRepositories } from "./functions/parse";
+import { parseMilestoneDepthAndIssueStates, parseScopedRepositories, validateViewParameter } from "./functions/parse";
 import { fetchGithubDataUsingGraphql, fetchRateLimit } from "./functions/fetch";
 import { createPinoLogger } from '@bogeychan/elysia-logger';
 import { GITHUB_JWT, resolveJwtPayload } from "./functions/authenticate";
@@ -111,6 +114,76 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
         .onBeforeHandle(({ fetchParams }) => {
             if (!fetchParams) return "Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.";
         })
+        .group("/info/:login_name", (app) => app
+            .get('', async ({ fetchParams, params: { login_name }, set }) => {
+                const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
+                    GITHUB_ORGANIZATION_BY_NAME(login_name),
+                    fetchParams!.auth,
+                    set,
+                    fetchParams!.auth_type!
+                );
+
+                return response;
+            }, {
+                params: t.Object({
+                    login_name: t.String()
+                }),
+                detail: {
+                    description: "",
+                    tags: ['github']
+                }
+            })
+            .group("/repositories/:repository_name", (app) => app
+                .get('', async (
+                    { fetchParams, params: { login_name, repository_name }, set }) => {
+                    const response = await fetchGithubDataUsingGraphql<{ organization: Repository }>(
+                        GITHUB_ORGANIZATION_REPOSITORY_BY_OWNER_NAME_AND_REPOSITORY_NAME(login_name, repository_name),
+                        fetchParams!.auth,
+                        set,
+                        fetchParams!.auth_type!
+                    );
+
+                    return response;
+                }, {
+                    params: t.Object({
+                        login_name: t.String(),
+                        repository_name: t.String()
+                    }),
+                    detail: {
+                        description: "",
+                        tags: ['github']
+                    }
+                })
+                .get('/projects/:project_name', async (
+                    { fetchParams, query, params: { login_name, repository_name, project_name }, set }) => {
+                    const view = validateViewParameter(String(query.view));
+
+                    const response = await fetchGithubDataUsingGraphql<{ repository: Repository }>(
+                        GITHUB_ORGANIZATION_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_PROJECT_NAME(login_name, repository_name, project_name, view),
+                        fetchParams!.auth,
+                        set,
+                        fetchParams!.auth_type!
+                    );
+
+                    return JSON.stringify(response, null, 2);
+                }, {
+                    query: t.Object({
+                        view: t.Optional(t.Numeric({
+                            min: 0
+                        }))
+                    }),
+                    params: t.Object({
+                        login_name: t.String(),
+                        repository_name: t.String(),
+                        project_name: t.String()
+                    }),
+                    detail: {
+                        description: "",
+                        tags: ['github']
+                    }
+                })
+            )
+        )
         .group("/:login_name/projects/:project_id", (app) => app
             .get('/infos', async ({ fetchParams, params: { login_name, project_id }, set }) => {
                 const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
