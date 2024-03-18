@@ -7,7 +7,7 @@ import bearer from '@elysiajs/bearer';
 import { fetchGithubDataUsingGraphql } from "./fetch";
 import { RateLimit } from "@octokit/graphql-schema";
 import { GITHUB_QUOTA } from "../graphql";
-
+ 
 /* JWT */
 
 export const GITHUB_JWT_REALM = 'propromoRestAdaptersGithub';
@@ -24,20 +24,20 @@ export const GITHUB_JWT = new Elysia()
 
 /* APP AND TOKEN AUTHENTICATION */
 
-async function checkIfTokenIsValid(bearerToken: string, set: Context["set"]) {
-    const quota = await fetchGithubDataUsingGraphql<{ rateLimit: RateLimit } | undefined | null>(
+async function checkIfTokenIsValid(token: string, set: Context["set"]) {
+    const response = await fetchGithubDataUsingGraphql<{ rateLimit: RateLimit } | undefined | null>(
         GITHUB_QUOTA,
-        bearerToken,
+        token,
         set
     );
 
-    if (!quota || !('rateLimit' in quota)) {
+    if (!response.success || (response?.data == undefined)) {
         set.status = 401;
         set.headers[
             'WWW-Authenticate'
         ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
 
-        return 'The provided token is invalid or has expired. Please try another token. Perhaps you chose the wrong provider? ' + "[" + quota?.error + "]" ?? '';
+        return 'The provided token is invalid or has expired. Please try another token. Perhaps you chose the wrong provider? ' + "[" + response?.error + "]" ?? '';
     } else {
         return true;
     }
@@ -137,7 +137,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
                 return 'Unauthorized';
             }
 
-            const tokenIsValid = await checkIfTokenIsValid(bearerToken, set);
+            const tokenIsValid = await checkIfTokenIsValid(token, set);
 
             if (typeof tokenIsValid === 'string') {
                 return tokenIsValid;

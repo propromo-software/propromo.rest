@@ -1,15 +1,16 @@
-import { Organization, User } from "@octokit/graphql-schema";
+import { Organization, RateLimit, User } from "@octokit/graphql-schema";
 import { Elysia, t } from "elysia";
 import {
     GITHUB_DEFAULT_PROJECT,
     GITHUB_PROJECT_INFO,
     GITHUB_PROJECT_REPOSITORIES,
     GITHUB_PROJECT_REPOSITORIES_AND_QUERY,
-    GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY
+    GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY,
+    GITHUB_QUOTA
 } from "./graphql";
 import { GITHUB_REPOSITORY_PARAMS, GITHUB_MILESTONE_PARAMS } from "./params";
 import { parseMilestoneDepthAndIssueStates, parseScopedRepositories } from "./functions/parse";
-import { fetchGithubDataUsingGraphql } from "./functions/fetch";
+import { fetchGithubDataUsingGraphql, fetchRateLimit } from "./functions/fetch";
 import { createPinoLogger } from '@bogeychan/elysia-logger';
 import { GITHUB_JWT, resolveJwtPayload } from "./functions/authenticate";
 import { guardEndpoints } from "./plugins";
@@ -54,6 +55,50 @@ export const GITHUB_APP_WEBHOOKS = new Elysia({ prefix: '/webhooks' })
             tags: ['github', 'webhooks']
         }
     });
+
+/* GENERAL */
+export const GITHUB_GENERAL = new Elysia({ prefix: '/info' })
+    .use(guardEndpoints(new Elysia()
+        .use(GITHUB_JWT)
+        .resolve(async ({ propromoRestAdaptersGithub, headers: { authorization }, set }) => {
+            return resolveJwtPayload<typeof propromoRestAdaptersGithub>(propromoRestAdaptersGithub, authorization, set);
+        })
+        .onBeforeHandle(({ fetchParams }) => {
+            if (!fetchParams) return "Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.";
+        })
+        .group("/quota", (app) => app
+            .get('/', async ({ fetchParams, set }) => {
+                const response = await fetchRateLimit(
+                    fetchParams!.auth,
+                    set
+                );
+
+                return response;
+            }, {
+                detail: {
+                    description: "",
+                    tags: ['github']
+                }
+            })
+            .get('/graphql', async ({ fetchParams, set }) => {
+                const response = await fetchGithubDataUsingGraphql<{ rateLimit: RateLimit } | undefined | null>(
+                    GITHUB_QUOTA,
+                    fetchParams!.auth,
+                    set
+                );
+
+                const quota = response?.data?.rateLimit;
+
+                return quota;
+            }, {
+                detail: {
+                    description: "",
+                    tags: ['github']
+                }
+            })
+        )
+    ));
+
 
 /* PROJECT */
 

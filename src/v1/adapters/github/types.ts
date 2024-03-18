@@ -1,6 +1,21 @@
+// https://www.npmjs.com/package/@octokit/types
 import { ElysiaErrors } from "elysia/dist/error";
+import {
+    GetResponseTypeFromEndpointMethod,
+    RequestParameters
+  } from "@octokit/types";
+import { Octokit } from "octokit";
 
-export interface GraphqlResponse<T> {
+export interface AnyGithubRestObject<T> {
+    get: (params?: (RequestParameters & {}) | undefined) => Promise<T>
+}
+
+const octokit = new Octokit();
+export type GetRateLimit = GetResponseTypeFromEndpointMethod<
+    typeof octokit.rest.rateLimit.get
+>;
+
+export interface RestResponse<T> {
     error?: any;
     success?: boolean;
     data?: T;
@@ -13,6 +28,8 @@ export interface GraphqlResponse<T> {
     path?: [any];
     type?: string | undefined;
 }
+
+export interface GraphqlResponse<T> extends RestResponse<T> {}
 
 // in type GraphQlQueryResponse<ResponseData> of @octokit/graphql (has string as type...)
 export enum GraphqlResponseErrorCode {

@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import { swagger } from '@elysiajs/swagger';
 
 import { SWAGGER_PATH, ROOT_PATHS, SWAGGER_PATH_EXCLUDE } from '../config';
-import { GITHUB_ORGS, GITHUB_USERS, GITHUB_APP_WEBHOOKS } from "./adapters/github";
+import { GITHUB_ORGS, GITHUB_USERS, GITHUB_APP_WEBHOOKS, GITHUB_GENERAL } from "./adapters/github";
 import { GITHUB_APP_AUTHENTICATION } from "./adapters/github/functions/authenticate";
 import { PROPROMO_BACKEND_SERVICE } from './adapters/backend/host';
 import { V1_PATH } from "../config";
@@ -12,6 +12,7 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
     .group('/github', (app) => app
         .use(GITHUB_APP_AUTHENTICATION)
         .use(GITHUB_APP_WEBHOOKS)
+        .use(GITHUB_GENERAL)
         .use(GITHUB_ORGS)
         .use(GITHUB_USERS)
     )
@@ -27,7 +28,7 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
             info: {
                 title: 'Propromo RestAPI Documentation',
                 description: 'A RestAPI for the scopes of the Github GraphqlAPI, that Propromo needs (latest).',
-                version: '1.0.1',
+                version: '1.0.2',
             },
             tags: [
                 { name: 'github', description: 'Used for fetching info from the Github GraphQl API.' },
