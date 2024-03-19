@@ -1,4 +1,4 @@
-import { Context } from "elysia";
+import type { Context } from "elysia";
 import { GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES } from "../types";
 
 /**
@@ -81,7 +81,7 @@ export function validateViewParameter(view_string: string | undefined): number {
     if (view_string === undefined) return -1;
     if (view_string === "%7Bproject_view%7D") return -1;
     const view = Number(view_string);
-    if (isNaN(view)) return -1;
+    if (Number.isNaN(view)) return -1;
 
     return view;
 }

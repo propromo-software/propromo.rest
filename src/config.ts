@@ -12,66 +12,66 @@ export const LATEST_SWAGGER_PATH = `${LATEST_MAJOR_VERSION}/${SWAGGER_PATH}`;
 export const V0_SWAGGER_PATH = `${V0_PATH}/${SWAGGER_PATH}`;
 export const V1_SWAGGER_PATH = `${V1_PATH}/${SWAGGER_PATH}`;
 export const SWAGGER_PATH_EXCLUDE = [
-    `/${V1_PATH}/${SWAGGER_PATH}`,
-    `/${V0_PATH}/${SWAGGER_PATH}`
+	`/${V1_PATH}/${SWAGGER_PATH}`,
+	`/${V0_PATH}/${SWAGGER_PATH}`,
 ];
 
 // Home Page URLs
 export const HOME_URLS = {
-    "api": {
-        "swagger": {
-            "url": LATEST_SWAGGER_PATH,
-            "name": "Swagger RestApi Docs [LATEST]",
-            "versions": {
-                "url": {
-                    "v0": `${V0_SWAGGER_PATH}`,
-                    "v1": `${V1_SWAGGER_PATH}`
-                },
-                "name": {
-                    "v0": "dev/testing",
-                    "v1": "latest/production"
-                }
-            }
-        },
-        "download": {
-            "url": `${LATEST_SWAGGER_PATH}/json`,
-            "name": "Swagger RestApi OpenAPI Spec [LATEST]",
-            "file": "propromo-rest-openapi-spec.json",
-            "action": "download",
-            "versions": {
-                "url": {
-                    "v0": `${V0_SWAGGER_PATH}/json`,
-                    "v1": `${V1_SWAGGER_PATH}/json`
-                },
-                "name": {
-                    "v0": "dev/testing",
-                    "v1": "latest/production"
-                },
-                "file": {
-                    "v0": "propromo-rest-openapi-spec-v0.json",
-                    "v1": "propromo-rest-openapi-spec-v1.json"
-                }
-            }
-        }
-    },
-    "website": {
-        "url": "https://propromo.duckdns.org",
-        "name": "Website"
-    },
-    "apps": {
-        "github": {
-            "url": "https://github.com/apps/propromo-software",
-            "name": "Github App"
-        }
-    }
+	api: {
+		swagger: {
+			url: LATEST_SWAGGER_PATH,
+			name: "Swagger RestApi Docs [LATEST]",
+			versions: {
+				url: {
+					v0: `${V0_SWAGGER_PATH}`,
+					v1: `${V1_SWAGGER_PATH}`,
+				},
+				name: {
+					v0: "dev/testing",
+					v1: "latest/production",
+				},
+			},
+		},
+		download: {
+			url: `${LATEST_SWAGGER_PATH}/json`,
+			name: "Swagger RestApi OpenAPI Spec [LATEST]",
+			file: "propromo-rest-openapi-spec.json",
+			action: "download",
+			versions: {
+				url: {
+					v0: `${V0_SWAGGER_PATH}/json`,
+					v1: `${V1_SWAGGER_PATH}/json`,
+				},
+				name: {
+					v0: "dev/testing",
+					v1: "latest/production",
+				},
+				file: {
+					v0: "propromo-rest-openapi-spec-v0.json",
+					v1: "propromo-rest-openapi-spec-v1.json",
+				},
+			},
+		},
+	},
+	website: {
+		url: "https://propromo.duckdns.org",
+		name: "Website",
+	},
+	apps: {
+		github: {
+			url: "https://github.com/apps/propromo-software",
+			name: "Github App",
+		},
+	},
 } as const;
 
 // CORS settings for development and production servers
 export const CORS_ORIGINS = [
-    HOME_URLS.website.url,
-    "https://propromo-d08144c627d3.herokuapp.com",
-    DEV_MODE ? "http://localhost:5000" : "https://propromo-ts.vercel.app",
-]
+	HOME_URLS.website.url,
+	"https://propromo-d08144c627d3.herokuapp.com",
+	DEV_MODE ? "http://localhost:5000" : "https://propromo-ts.vercel.app",
+];
 
 // Home Page
 export const ROOT = `
@@ -112,8 +112,16 @@ export const ROOT = `
 </html>`;
 
 // Home Page Routes
-export const ROOT_PATHS = ["/", "/home", "/root", "/start", "/info", "/about", "/links"];
-export const ROOT_ROUTES = new Elysia({ prefix: '' });
-ROOT_PATHS.forEach((path) => {
-    ROOT_ROUTES.get(path, () => ROOT);
-});
+export const ROOT_PATHS = [
+	"/",
+	"/home",
+	"/root",
+	"/start",
+	"/info",
+	"/about",
+	"/links",
+];
+export const ROOT_ROUTES = new Elysia({ prefix: "" });
+for (const path of ROOT_PATHS) {
+	ROOT_ROUTES.get(path, () => ROOT);
+}

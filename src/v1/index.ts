@@ -22,13 +22,14 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
         exclude: [
             ...ROOT_PATHS,
             ...SWAGGER_PATH_EXCLUDE,
+            // biome-ignore lint/complexity/useRegexLiterals:
             new RegExp("(\/github\/webhooks\/)[A-Za-z\/{_}]*")
         ],
         documentation: {
             info: {
                 title: 'Propromo RestAPI Documentation',
                 description: 'A RestAPI for the scopes of the Github GraphqlAPI, that Propromo needs (latest).',
-                version: '1.0.3',
+                version: '1.0.4',
             },
             tags: [
                 { name: 'github', description: 'Used for fetching info from the Github GraphQl API.' },

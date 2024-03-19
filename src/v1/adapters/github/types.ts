@@ -1,10 +1,15 @@
 // https://www.npmjs.com/package/@octokit/types
-import { ElysiaErrors } from "elysia/dist/error";
-import {
+import type { ElysiaErrors } from "elysia/dist/error";
+import type {
     GetResponseTypeFromEndpointMethod,
     RequestParameters
-  } from "@octokit/types";
+} from "@octokit/types";
 import { Octokit } from "octokit";
+
+export interface TokenVerifier {
+    // biome-ignore lint/suspicious/noExplicitAny:
+    verify(bearer: string | undefined): Promise<any>;
+}
 
 export interface AnyGithubRestObject<T> {
     get: (params?: (RequestParameters & {}) | undefined) => Promise<T>
@@ -16,6 +21,7 @@ export type GetRateLimit = GetResponseTypeFromEndpointMethod<
 >;
 
 export interface RestResponse<T> {
+    // biome-ignore lint/suspicious/noExplicitAny:
     error?: any;
     success?: boolean;
     data?: T;
@@ -25,11 +31,12 @@ export interface RestResponse<T> {
 
     // GraphqlResponseError
     cause?: unknown;
+    // biome-ignore lint/suspicious/noExplicitAny:
     path?: [any];
     type?: string | undefined;
 }
 
-export interface GraphqlResponse<T> extends RestResponse<T> {}
+export interface GraphqlResponse<T> extends RestResponse<T> { }
 
 // in type GraphQlQueryResponse<ResponseData> of @octokit/graphql (has string as type...)
 export enum GraphqlResponseErrorCode {
@@ -70,12 +77,12 @@ export enum GITHUB_PROJECT_SCOPES {
 
 export type GITHUB_PROJECT_INPUT_SCOPES = GITHUB_PROJECT_SCOPES[] | { project_scopes: GITHUB_PROJECT_SCOPES[], repository_scopes: null | GITHUB_REPOSITORY_SCOPES[] };
 export const GITHUB_PROJECT_INPUT_SCOPES_AS_OBJECT = {
-    "OPTION_1": Object.values(GITHUB_PROJECT_SCOPES).join(" | "),
-    "OPTION_2": {
-        "project_scopes": Object.values(GITHUB_PROJECT_SCOPES).join(" | "),
-        "repository_scopes": {
-            "OPTION_1": null,
-            "OPTION_2": Object.values(GITHUB_REPOSITORY_SCOPES).join(" | ")
+    OPTION_1: Object.values(GITHUB_PROJECT_SCOPES).join(" | "),
+    OPTION_2: {
+        project_scopes: Object.values(GITHUB_PROJECT_SCOPES).join(" | "),
+        repository_scopes: {
+            OPTION_1: null,
+            OPTION_2: Object.values(GITHUB_REPOSITORY_SCOPES).join(" | ")
         }
     }
 }

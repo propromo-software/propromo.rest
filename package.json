@@ -1,24 +1,27 @@
 {
   "name": "rest",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "dev": "bun run --watch src/index.ts",
+    "lint": "biome ci .",
+    "format-organize-lint": "bunx @biomejs/biome format . --write"
   },
   "dependencies": {
-    "@bogeychan/elysia-logger": "^0.0.17",
-    "@elysiajs/bearer": "^0.8.0",
-    "@elysiajs/cors": "^0.8.0",
-    "@elysiajs/html": "^0.8.0",
-    "@elysiajs/jwt": "^0.8.0",
-    "@elysiajs/static": "^0.8.1",
-    "@elysiajs/swagger": "^0.8.3",
+    "@bogeychan/elysia-logger": "^0.0.18",
+    "@elysiajs/bearer": "^1.0.2",
+    "@elysiajs/cors": "^1.0.2",
+    "@elysiajs/html": "^1.0.2",
+    "@elysiajs/jwt": "^1.0.2",
+    "@elysiajs/static": "^1.0.2",
+    "@elysiajs/swagger": "^1.0.2",
     "@octokit/graphql-schema": "^14.47.1",
     "elysia": "^1.0.5",
     "heroku": "^8.10.0",
     "octokit": "^3.1.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.6.1",
     "@octokit/types": "^12.6.0",
     "bun-types": "^1.0.33"
   },

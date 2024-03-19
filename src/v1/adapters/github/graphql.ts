@@ -1,4 +1,4 @@
-import { GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_PROJECT_INPUT_SCOPES, GITHUB_PROJECT_SCOPES, GITHUB_REPOSITORY_SCOPES, GRAMMATICAL_NUMBER } from "./types";
+import { GITHUB_MILESTONES_DEPTH, type GITHUB_MILESTONE_ISSUE_STATES, type GITHUB_PROJECT_INPUT_SCOPES, GITHUB_PROJECT_SCOPES, GITHUB_REPOSITORY_SCOPES, GRAMMATICAL_NUMBER } from "./types";
 import { issues, license, topics, labels, vulnerabilities, releases, deployments } from "./scopes";
 
 /* Query building helper functions: */
@@ -316,7 +316,7 @@ const GITHUB_PROJECT_SCOPED = function (project_id: number, scopes: GITHUB_PROJE
 /* ORGANIZATIONS and USERS */
 
 /**
- * Entry function for the fetching of a **organization project** from the Github GraphQl API.
+ * Entry function for the fetching of a **organization project** from the Github GraphQl API.  
  * Schema: ``/orgs/<LOGIN_NAME>/projects/<PROJECT_NUMBER>[/views/<VIEW_NUMBER>]``
  */
 export const GITHUB_DEFAULT_PROJECT = function (login_name: string, project_id: number, project_view: number, login_type: string = "organization") {
@@ -329,7 +329,7 @@ export const GITHUB_DEFAULT_PROJECT = function (login_name: string, project_id: 
 }
 
 /**
- * Entry function for the fetching of a **organization projects root info** from the Github GraphQl API.
+ * Entry function for the fetching of a **organization projects root info** from the Github GraphQl API.  
  * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/infos``
  */
 export const GITHUB_PROJECT_INFO = function (login_name: string, project_id: number, login_type: string = "organization") {
@@ -342,7 +342,7 @@ export const GITHUB_PROJECT_INFO = function (login_name: string, project_id: num
 }
 
 /**
- * Entry function for the fetching of a **organization projects repositories** from the Github GraphQl API.
+ * Entry function for the fetching of a **organization projects repositories** from the Github GraphQl API.  
  * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/repositories``
  */
 export const GITHUB_PROJECT_REPOSITORIES = function (login_name: string, project_id: number, login_type: string = "organization") {
@@ -358,7 +358,7 @@ export const GITHUB_PROJECT_REPOSITORIES = function (login_name: string, project
 }
 
 /**
- * Entry function for the fetching of a **organization projects repositories** from the Github GraphQl API (scoped).
+ * Entry function for the fetching of a **organization projects repositories** from the Github GraphQl API (scoped).  
  * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/repositories?scopes=<REPOSITORY_SCOPES>``
  */
 export const GITHUB_PROJECT_REPOSITORIES_AND_QUERY = function (login_name: string, project_id: number, repository_scopes: GITHUB_REPOSITORY_SCOPES[] | null, login_type: string = "organization") {
@@ -375,7 +375,7 @@ export const GITHUB_PROJECT_REPOSITORIES_AND_QUERY = function (login_name: strin
 }
 
 /**
- * Entry function for the fetching of **milestones/issues** from the Github GraphQl API (scoped).
+ * Entry function for the fetching of **milestones/issues** from the Github GraphQl API (scoped).  
  * Schema: ``/users/<LOGIN_NAME>/projects/<PROJECT_NUMBER>/repositories/milestones?depth=<MILESTONE_DEPTH>&issue_states=<ISSUE_STATES>``
  */
 export const GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY = function (
@@ -452,8 +452,14 @@ export const GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY = function (
     }`
 }
 
-/* Testing functions: */
+/* Info Routes: */
 
+/**
+ * Retrieves information about a GitHub organization by its login name.
+ *
+ * @param {string} login_name - The login name of the GitHub organization
+ * @return {string} A GraphQL query string to fetch organization details
+ */
 export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) {
     return `{
         organization(login: "${login_name}") {
@@ -543,12 +549,28 @@ export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) {
     }`;
 }
 
+/**
+ * Generates a GitHub organization repository by owner name and repository name.
+ *
+ * @param {string} login_name - The login name of the owner.
+ * @param {string} repository_name - The name of the repository.
+ * @return {string} The generated GitHub organization repository.
+ */
 export const GITHUB_ORGANIZATION_REPOSITORY_BY_OWNER_NAME_AND_REPOSITORY_NAME = function (login_name: string, repository_name: string) {
     return `{
         ${GITHUB_REPOSITORY(GRAMMATICAL_NUMBER.SINGULAR, login_name, repository_name)}
     }`
 }
 
+/**
+ * Retrieves a GitHub organization project by the owner name, repository name, and project name.
+ *
+ * @param {string} login_name - The login name of the organization owner.
+ * @param {string} repository_name - The name of the repository.
+ * @param {string} project_name - The name of the project.
+ * @param {number} view - The view number.
+ * @return {string} The GraphQL query for retrieving the organization project.
+ */
 export const GITHUB_ORGANIZATION_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_PROJECT_NAME = function (login_name: string, repository_name: string, project_name: string, view: number) {
     // every project has a repository for its items
     return `{
@@ -558,6 +580,11 @@ export const GITHUB_ORGANIZATION_PROJECT_BY_OWNER_NAME_AND_REPOSITORY_NAME_AND_P
     }`
 }
 
+/**
+ * Retrieves the GitHub organization quota.
+ *
+ * @return {string} The GraphQL query for retrieving the organization quota.
+ */
 export const GITHUB_QUOTA = `{
     rateLimit {
         limit

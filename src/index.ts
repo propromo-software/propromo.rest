@@ -8,6 +8,7 @@ import { CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./
 import { V0 } from "./v0";
 import { v1 } from "./v1";
 
+// @ts-ignore
 const app: Elysia = new Elysia()
   .use(staticPlugin({ // serve static files from the "static" directory
     assets: "static",
@@ -41,7 +42,7 @@ const app: Elysia = new Elysia()
       set.redirect = LATEST_SWAGGER_PATH;
     })
     .get('/json', async ({ set }) => {
-      set.redirect = "/" + LATEST_SWAGGER_PATH + '/json';
+      set.redirect = `/${LATEST_SWAGGER_PATH}/json`;
     }, {
       detail: {
         description: "No authentication required. Redirects to the latest version of the API documentation in JSON format.",

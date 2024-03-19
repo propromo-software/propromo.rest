@@ -2,12 +2,12 @@ import { Context, Elysia, t } from "elysia";
 import jwt from '@elysiajs/jwt';
 import { octokitApp } from "./app";
 import { Octokit } from "octokit";
-import { GITHUB_AUTHENTICATION_STRATEGY_OPTIONS } from "../types";
+import { GITHUB_AUTHENTICATION_STRATEGY_OPTIONS, TokenVerifier } from "../types";
 import bearer from '@elysiajs/bearer';
 import { fetchGithubDataUsingGraphql } from "./fetch";
 import { RateLimit } from "@octokit/graphql-schema";
 import { GITHUB_QUOTA } from "../graphql";
- 
+
 /* JWT */
 
 export const GITHUB_JWT_REALM = 'propromoRestAdaptersGithub';
@@ -24,7 +24,14 @@ export const GITHUB_JWT = new Elysia()
 
 /* APP AND TOKEN AUTHENTICATION */
 
-async function checkIfTokenIsValid(token: string, set: Context["set"]) {
+/**
+ * Checks if the provided token is valid by fetching data from Github using GraphQL.
+ *
+ * @param {string} token - The token to check.
+ * @param {Context["set"]} set - The set object from the context.
+ * @return {Promise<boolean | string>} Returns true if the token is valid, otherwise returns an error message.
+ */
+async function checkIfTokenIsValid(token: string, set: Context["set"]): Promise<boolean | string> {
     const response = await fetchGithubDataUsingGraphql<{ rateLimit: RateLimit } | undefined | null>(
         GITHUB_QUOTA,
         token,
@@ -151,11 +158,15 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
         }
     });
 
-interface TokenVerifier {
-    verify(bearer: string | undefined): Promise<any>;
-}
-
-export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: string | undefined, set: Context["set"]) {
+/**
+ * Retrieves the payload from the given token verifier and sets the status and headers if the payload is invalid. Returns the payload if it is valid, or 'Unauthorized' if it is invalid.
+ *
+ * @param {T} realm - The token verifier instance.
+ * @param {string | undefined} bearer - The bearer token to verify.
+ * @param {Context["set"]} set - The set function from the context.
+ * @return {Promise<{payload: any}> | string} - Returns the payload if it is valid, or 'Unauthorized' if it is invalid.
+ */
+export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: string | undefined, set: Context["set"]): Promise<string | { payload: any; }> {
     const payloadPromise = realm.verify(bearer);
     const payload = await payloadPromise;
 
@@ -173,7 +184,15 @@ export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: s
     }
 }
 
-export async function resolveJwtPayload<T extends TokenVerifier>(realm: T, authorization: string | undefined, set: Context["set"]) {
+/**
+ * Resolves the JWT payload for the given token verifier.
+ *
+ * @param {T} realm - The token verifier.
+ * @param {string | undefined} authorization - The authorization header value.
+ * @param {Context["set"]} set - The set function from the context.
+ * @return {Promise<{ fetchParams: { [key: string]: string }; } | { payload: null } | null>} - The resolved JWT payload or null if there was an error.
+ */
+export async function resolveJwtPayload<T extends TokenVerifier>(realm: T, authorization: string | undefined, set: Context["set"]): Promise<{ fetchParams: { [key: string]: string; }; } | { payload: null; } | null> {
     if (!authorization) {
         set.status = 400;
         set.headers[
@@ -198,7 +217,13 @@ export async function resolveJwtPayload<T extends TokenVerifier>(realm: T, autho
     }
 }
 
-function getFetchParams(jwt: any) {
+/**
+ * Generate fetch parameters based on the JWT payload.
+ *
+ * @param {any} jwt - the JWT payload
+ * @return {Object} object containing auth_type and auth
+ */
+function getFetchParams(jwt: any): object {
     const auth_type = jwt?.payload?.token ? GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN : GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP;
     const installation_id: number = jwt?.payload?.installation_id;
     const token: string = jwt?.payload?.token;

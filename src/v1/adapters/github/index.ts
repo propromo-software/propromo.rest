@@ -1,3 +1,4 @@
+// @ts-nocheck (weird errors, after upgrading to Elysia v1.0)
 import { Organization, RateLimit, Repository, User } from "@octokit/graphql-schema";
 import { Elysia, t } from "elysia";
 import {

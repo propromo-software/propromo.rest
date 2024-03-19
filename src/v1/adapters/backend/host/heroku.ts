@@ -1,17 +1,19 @@
 import { spawn } from 'node:child_process';
 
-export class Heroku { // only possible with their cli-tool (see https://stackoverflow.com/questions/78073975/heroku-run-via-their-node-heroku-client)
+// biome-ignore lint/complexity/noStaticOnlyClass:
+export abstract class Heroku { // only possible with their cli-tool (see https://stackoverflow.com/questions/78073975/heroku-run-via-their-node-heroku-client)
   static async dropAndCreateTables(framework = "Laravel"): Promise<string> {
     let response = "";
 
     switch (framework) {
       case "Laravel":
-        response = await this.run("php artisan migrate:fresh"); // "Olles weg, hod funktioniert 💀";
+        response = await Heroku.run("php artisan migrate:fresh"); // "Olles weg, hod funktioniert 💀";
         break;
-      default:
+      default: {
         const errorMessage = `Framework '${framework}' not supported`;
         console.error(errorMessage);
         response = errorMessage;
+      }
     }
 
     console.log(response);
@@ -25,7 +27,7 @@ export class Heroku { // only possible with their cli-tool (see https://stackove
       const herokuRun = spawn('bash', ['-c', `HEROKU_API_KEY='${process.env.HEROKU_API_TOKEN}' ${herokuCommand}`]);
 
       let result = false;
-      let log = [] as string[];
+      const log = [] as string[];
 
       herokuRun.stdout.on('data', (data: string) => {
         console.log(`stdout: ${data}`);
@@ -38,14 +40,17 @@ export class Heroku { // only possible with their cli-tool (see https://stackove
         }
       });
 
+      // biome-ignore lint/suspicious/noExplicitAny:
       herokuRun.stderr.on('data', (data: any) => {
         console.error(`stderr: ${data}`);
       });
 
+      // biome-ignore lint/suspicious/noExplicitAny:
       herokuRun.on('exit', (code: any) => {
         console.log(`child exited with code ${code}`);
 
         if (code === 0) {
+          // biome-ignore lint/suspicious/noControlCharactersInRegex:
           const sanitizedLog = log.join('').replace(/\u001B\[[0-9;]*[mBDA]/g, ''); // sanitize the log from ansi escape codes, so that the includes condition doesn't fail
           console.log(sanitizedLog);
 
@@ -53,9 +58,9 @@ export class Heroku { // only possible with their cli-tool (see https://stackove
             result = true;
           }
 
-          resolve("successful: " + result);
+          resolve(`successful: ${result}`);
         } else {
-          reject("error code: " + code);
+          reject(`error code: ${code}`);
         }
       });
     });
