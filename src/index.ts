@@ -8,7 +8,6 @@ import { CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./
 import { V0 } from "./v0";
 import { v1 } from "./v1";
 
-// @ts-ignore
 const app: Elysia = new Elysia()
   .use(staticPlugin({ // serve static files from the "static" directory
     assets: "static",

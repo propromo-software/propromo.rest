@@ -1,6 +1,6 @@
 {
   "name": "rest",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts"
@@ -14,13 +14,13 @@
     "@elysiajs/static": "^0.8.1",
     "@elysiajs/swagger": "^0.8.3",
     "@octokit/graphql-schema": "^14.47.1",
-    "@octokit/types": "^12.6.0",
-    "elysia": "latest",
+    "elysia": "^1.0.5",
     "heroku": "^8.10.0",
     "octokit": "^3.1.2"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "@octokit/types": "^12.6.0",
+    "bun-types": "^1.0.33"
   },
   "module": "src/index.js",
   "engines": {
