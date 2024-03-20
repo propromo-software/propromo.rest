@@ -4,7 +4,7 @@ import { html } from '@elysiajs/html'; // https://elysiajs.com/plugins/html.html
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
 import { type InferContext, logger } from '@bogeychan/elysia-logger'; // https://www.npmjs.com/package/@bogeychan/elysia-logger
 
-import { CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
+import { API_FORWARD_ROUTES, CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { V0 } from "./v0";
 import { v1 } from "./v1";
 
@@ -36,6 +36,7 @@ const app: Elysia = new Elysia()
   .use(ROOT_ROUTES)
 
   // VERSIONS
+  .use(API_FORWARD_ROUTES)
   .group(SWAGGER_PATH, (app) => app // if no version is specified, redirect to the latest version
     .get('', async ({ set }) => {
       set.status = 308;

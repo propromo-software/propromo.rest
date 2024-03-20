@@ -7,6 +7,7 @@ export const DEV_MODE = process?.env?.DEV_MODE === "true";
 export const V0_PATH = "v0";
 export const V1_PATH = "v1";
 export const LATEST_MAJOR_VERSION = V1_PATH;
+export const API_PATHS = [V0_PATH, V1_PATH];
 export const SWAGGER_PATH = "api";
 export const LATEST_SWAGGER_PATH = `${LATEST_MAJOR_VERSION}/${SWAGGER_PATH}`;
 export const V0_SWAGGER_PATH = `${V0_PATH}/${SWAGGER_PATH}`;
@@ -124,4 +125,11 @@ export const ROOT_PATHS = [
 export const ROOT_ROUTES = new Elysia({ prefix: "" });
 for (const path of ROOT_PATHS) {
 	ROOT_ROUTES.get(path, () => ROOT);
+}
+export const API_FORWARD_ROUTES = new Elysia({ prefix: "" });
+for (const path of API_PATHS) {
+	API_FORWARD_ROUTES.get(path, ({ set }) => {
+		set.status = 308;
+		set.redirect = `/${path}/${SWAGGER_PATH}`;
+	});
 }
