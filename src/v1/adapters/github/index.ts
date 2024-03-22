@@ -12,9 +12,10 @@ import {
     GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY,
     GITHUB_QUOTA
 } from "./graphql";
-import { GITHUB_REPOSITORY_PARAMS, GITHUB_MILESTONE_PARAMS } from "./params";
-import { parseMilestoneDepthAndIssueStates, parseScopedRepositories, validateViewParameter } from "./functions/parse";
+import { GITHUB_REPOSITORY_PARAMS, GITHUB_MILESTONE_PARAMS, GITHUB_ORGANIZATION_PARAMS } from "./params";
+import { parseScopes, parsePageSizes, validateViewParameter } from "./functions/parse";
 import { fetchGithubDataUsingGraphql, fetchRateLimit } from "./functions/fetch";
+import { GITHUB_ORGANIZATION_SCOPES, GITHUB_REPOSITORY_SCOPES, GITHUB_MILESTONES_DEPTH, GITHUB_MILESTONE_ISSUE_STATES } from "./types";
 import { createPinoLogger } from '@bogeychan/elysia-logger';
 import { GITHUB_JWT, resolveJwtPayload } from "./functions/authenticate";
 import { guardEndpoints } from "./plugins";
@@ -52,7 +53,7 @@ export const GITHUB_APP_WEBHOOKS = new Elysia({ prefix: '/webhooks' })
         })
         child.info(ctx, "webhook received");
 
-        return JSON.stringify(ctx.body, null, 2);
+        return ctx.body;
     }, {
         detail: {
             description: "",
@@ -115,22 +116,35 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
         .onBeforeHandle(({ fetchParams }) => {
             if (!fetchParams) return "Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.";
         })
-        .group("/info/:login_name", (app) => app
-            .get('', async ({ fetchParams, params: { login_name }, set }) => {
-                const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                    GITHUB_ORGANIZATION_BY_NAME(login_name),
-                    fetchParams!.auth,
-                    set,
-                    fetchParams!.auth_type!
-                );
+        .group("/info/:login_name", (app) => app // TODO: add types and info to description (improve the other descriptions too), test all endpoints
+            .get('', async ({ fetchParams, params: { login_name }, set, query }) => {
+                // Why two different query parameters? Because typing and parsing something like ?scope=<scope>(filter=xxx,pageSize=xxx...) is too much of a pain.
+                const parsedScopes = parseScopes<GITHUB_ORGANIZATION_SCOPES>(query?.scope, GITHUB_ORGANIZATION_SCOPES, set);
+                const parsedPageSizes = parsePageSizes<GITHUB_ORGANIZATION_SCOPES>(query?.page, parsedScopes, set);
 
-                return response;
+                if (Array.isArray(parsedScopes)) {
+                    const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
+                        GITHUB_ORGANIZATION_BY_NAME(login_name, parsedScopes, parsedPageSizes),
+                        fetchParams!.auth,
+                        set,
+                        fetchParams!.auth_type!
+                    );
+
+                    set.status = 200;
+                    return response;
+                } else {
+                    return parsedScopes;
+                }
             }, {
                 params: t.Object({
                     login_name: t.String()
                 }),
+                query: t.Object({
+                    scope: t.Optional(t.String()),
+                    page: t.Optional(t.String())
+                }),
                 detail: {
-                    description: "",
+                    description: GITHUB_ORGANIZATION_PARAMS,
                     tags: ['github']
                 }
             })
@@ -166,7 +180,7 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
                         fetchParams!.auth_type!
                     );
 
-                    return JSON.stringify(response, null, 2);
+                    return response;
                 }, {
                     query: t.Object({
                         view: t.Optional(t.Numeric({
@@ -219,7 +233,7 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
                 }
             })
             .get('/repositories/scoped', async ({ fetchParams, params: { login_name, project_id }, query, set }) => {
-                const parsedScopes = parseScopedRepositories(query.scope, set);
+                const parsedScopes = parseScopes<GITHUB_REPOSITORY_SCOPES>(query.scope, GITHUB_REPOSITORY_SCOPES, set);
 
                 if (Array.isArray(parsedScopes)) {
                     const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
@@ -231,24 +245,26 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
 
                     return response;
                 } else {
-                    return JSON.stringify(parsedScopes, null, 2);
+                    return parsedScopes;
                 }
             }, {
                 params: t.Object(GITHUB_PROJECT_PARAMS),
-                query: t.Object(GITHUB_REPOSITORY_SCOPE_QUERY),
+                query: t.Object({
+                    scope: t.Optional(t.String()),
+                    page: t.Optional(t.String())
+                }),
                 detail: {
-                    description: JSON.stringify(GITHUB_REPOSITORY_PARAMS, null, 2),
+                    description: GITHUB_REPOSITORY_PARAMS,
                     tags: ['github']
                 }
             })
             .get('/repositories/milestones/:milestone_id', async ({ fetchParams, params: { login_name, project_id, milestone_id }, query, set }) => {
-                const parsedDepthAndIssueStates = parseMilestoneDepthAndIssueStates(query.depth, query.issue_states, set);
+                const parsedDepth = parseScopes<GITHUB_MILESTONES_DEPTH>(query.depth, GITHUB_MILESTONES_DEPTH, set);
+                const parsedIssueStates = parseScopes<GITHUB_MILESTONE_ISSUE_STATES>(query.issue_states, GITHUB_MILESTONE_ISSUE_STATES, set);
 
-                if ('depth' in parsedDepthAndIssueStates && 'issue_states' in parsedDepthAndIssueStates) {
-                    const { depth, issue_states } = parsedDepthAndIssueStates;
-
+                if (Array.isArray(parsedDepth) && Array.isArray(parsedIssueStates)) {
                     const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
-                        GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY(login_name, project_id, milestone_id, depth, issue_states),
+                        GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY(login_name, project_id, milestone_id, parsedDepth, parsedIssueStates),
                         fetchParams!.auth!,
                         set,
                         fetchParams!.auth_type!
@@ -256,13 +272,13 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
 
                     return response;
                 } else {
-                    return JSON.stringify(parsedDepthAndIssueStates, null, 2);
+                    return [parsedDepth, parsedIssueStates];
                 }
             }, {
                 params: t.Object(GITHUB_PROJECT_MILESTONE_PARAMS),
                 query: t.Object(GITHUB_MILESTONE_QUERY),
                 detail: {
-                    description: JSON.stringify(GITHUB_MILESTONE_PARAMS, null, 2),
+                    description: GITHUB_MILESTONE_PARAMS,
                     tags: ['github']
                 }
             })
@@ -329,7 +345,7 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
                 }
             })
             .get('/repositories/scoped', async ({ fetchParams, params: { login_name, project_id }, query, set }) => {
-                const parsedScopes = parseScopedRepositories(query.scope, set);
+                const parsedScopes = parseScopes<GITHUB_REPOSITORY_SCOPES>(query.scope, GITHUB_REPOSITORY_SCOPES, set);
 
                 if (Array.isArray(parsedScopes)) {
                     const response = await fetchGithubDataUsingGraphql<{ user: User }>(
@@ -341,38 +357,37 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
 
                     return response;
                 } else {
-                    return JSON.stringify(parsedScopes, null, 2);
+                    return parsedScopes;
                 }
             }, {
                 params: t.Object(GITHUB_PROJECT_PARAMS),
                 query: t.Object(GITHUB_REPOSITORY_SCOPE_QUERY),
                 detail: {
-                    description: JSON.stringify(GITHUB_REPOSITORY_PARAMS, null, 2),
+                    description: GITHUB_REPOSITORY_PARAMS,
                     tags: ['github']
                 }
             })
             .get('/repositories/milestones/:milestone_id', async ({ fetchParams, params: { login_name, project_id, milestone_id }, query, set }) => {
-                const parsedDepthAndIssueStates = parseMilestoneDepthAndIssueStates(query.depth, query.issue_states, set);
+                const parsedDepth = parseScopes<GITHUB_MILESTONES_DEPTH>(query.depth, GITHUB_MILESTONES_DEPTH, set);
+                const parsedIssueStates = parseScopes<GITHUB_MILESTONE_ISSUE_STATES>(query.issue_states, GITHUB_MILESTONE_ISSUE_STATES, set);
 
-                if ('depth' in parsedDepthAndIssueStates && 'issue_states' in parsedDepthAndIssueStates) {
-                    const { depth, issue_states } = parsedDepthAndIssueStates;
-
+                if (Array.isArray(parsedDepth) && Array.isArray(parsedIssueStates)) {
                     const response = await fetchGithubDataUsingGraphql<{ user: User }>(
-                        GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY(login_name, project_id, milestone_id, depth, issue_states, "user"),
-                        fetchParams!.auth,
+                        GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY(login_name, project_id, milestone_id, parsedDepth, parsedIssueStates, "user"),
+                        fetchParams!.auth!,
                         set,
                         fetchParams!.auth_type!
                     );
 
                     return response;
                 } else {
-                    return JSON.stringify(parsedDepthAndIssueStates, null, 2);
+                    return [parsedDepth, parsedIssueStates];
                 }
             }, {
                 params: t.Object(GITHUB_PROJECT_MILESTONE_PARAMS),
                 query: t.Object(GITHUB_MILESTONE_QUERY),
                 detail: {
-                    description: JSON.stringify(GITHUB_MILESTONE_PARAMS, null, 2),
+                    description: GITHUB_MILESTONE_PARAMS,
                     tags: ['github']
                 }
             })

@@ -101,15 +101,6 @@ releases(first: 10) {
                 name
             }
         }
-        author {
-            avatarUrl
-            email
-            login
-            name
-            pronouns
-            url
-            websiteUrl
-        }
         releaseAssets(first: 10) {
             nodes {
                 contentType
@@ -125,7 +116,7 @@ releases(first: 10) {
 `;
 
 export const deployments = `
-deployments(first:10) {
+deployments(first: 10) {
     nodes {
     updatedAt
     createdAt
@@ -195,17 +186,6 @@ nodes {
     closedAt
     body
     lastEditedAt
-    assignees(first: 10) {
-        nodes {
-            avatarUrl
-            email
-            login
-            name
-            pronouns
-            url
-            websiteUrl
-        }
-    }
     labels(first: 10) {
         nodes {
             url
@@ -217,5 +197,4 @@ nodes {
             isDefault
         }
     }
-# comments
 }`;

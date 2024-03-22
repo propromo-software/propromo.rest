@@ -1,6 +1,6 @@
 {
   "name": "rest",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
@@ -16,7 +16,7 @@
     "@elysiajs/static": "^1.0.2",
     "@elysiajs/swagger": "^1.0.2",
     "@octokit/graphql-schema": "^14.47.1",
-    "elysia": "^1.0.5",
+    "elysia": "^1.0.7",
     "heroku": "^8.10.0",
     "octokit": "^3.1.2"
   },

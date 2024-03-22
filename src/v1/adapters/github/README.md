@@ -7,3 +7,9 @@ It is basically a wrapper around the Github Graphql-API, to reduce it's complexi
 ## Docs
 
 [/v1/api#tag/github](http://localhost:3000/v1/api#tag/github)
+
+## Testing
+
+| URL | Description | Parameters |
+| --- | --- | --- |
+| <http://localhost:3000/v1/github/info/quota/graphql> | View quota left. | none |

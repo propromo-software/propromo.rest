@@ -6,19 +6,26 @@ import type {
 } from "@octokit/types";
 import { Octokit } from "octokit";
 
+/* AUTHENTICATION */
+
 export interface TokenVerifier {
     // biome-ignore lint/suspicious/noExplicitAny:
     verify(bearer: string | undefined): Promise<any>;
 }
 
-export interface AnyGithubRestObject<T> {
-    get: (params?: (RequestParameters & {}) | undefined) => Promise<T>
-}
+/* REST/GRAPHQL */
+
+// type UnionOfKeys<T> = keyof T extends infer U ? U : never;
+// export type UnionOfValues<T> = T[keyof T];
 
 const octokit = new Octokit();
 export type GetRateLimit = GetResponseTypeFromEndpointMethod<
     typeof octokit.rest.rateLimit.get
 >;
+
+export interface AnyGithubRestObject<T> {
+    get: (params?: (RequestParameters & {}) | undefined) => Promise<T>
+}
 
 export interface RestResponse<T> {
     // biome-ignore lint/suspicious/noExplicitAny:
@@ -45,6 +52,11 @@ export enum GraphqlResponseErrorCode {
 
 /* ENDPOINTS */
 
+export type PageSize<T> = {
+    scopeName: T;
+    pageSize: number;
+}
+
 export enum GRAMMATICAL_NUMBER {
     SINGULAR = 1,
     PLURAL = 0,
@@ -54,6 +66,16 @@ export enum GRAMMATICAL_NUMBER {
 export enum GITHUB_AUTHENTICATION_STRATEGY_OPTIONS {
     TOKEN = "TOKEN",
     APP = "APP"
+}
+
+export enum GITHUB_ORGANIZATION_SCOPES {
+    INFO = "info",
+    PACKAGES = "packages",
+    REPOSITORIES = "repositories",
+    TEAMS = "teams",
+    PROJECTS = "projects",
+    ESSENTIAL = "essential",
+    ALL = "all"
 }
 
 export enum GITHUB_REPOSITORY_SCOPES {

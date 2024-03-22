@@ -1,4 +1,4 @@
-import { GITHUB_MILESTONES_DEPTH, type GITHUB_MILESTONE_ISSUE_STATES, type GITHUB_PROJECT_INPUT_SCOPES, GITHUB_PROJECT_SCOPES, GITHUB_REPOSITORY_SCOPES, GRAMMATICAL_NUMBER } from "./types";
+import { GITHUB_MILESTONES_DEPTH, type GITHUB_MILESTONE_ISSUE_STATES, type GITHUB_PROJECT_INPUT_SCOPES, GITHUB_PROJECT_SCOPES, GITHUB_REPOSITORY_SCOPES, GITHUB_ORGANIZATION_SCOPES, GRAMMATICAL_NUMBER, PageSize } from "./types";
 import { issues, license, topics, labels, vulnerabilities, releases, deployments } from "./scopes";
 
 /* Query building helper functions: */
@@ -6,9 +6,9 @@ import { issues, license, topics, labels, vulnerabilities, releases, deployments
 /**
 * Helper function that returns the Github GraphQl query part needed for the fetching of a **repository** or multiple **repositories** using the parent query as root.
 */
-const GITHUB_REPOSITORY = function (amount: GRAMMATICAL_NUMBER, owner?: string, name?: string) {
+const GITHUB_REPOSITORY = function (amount: GRAMMATICAL_NUMBER, owner?: string, name?: string, number = 10) {
     let repositoryQueryStart = `
-        repositories(first: 10) {
+        repositories(first: ${number}) {
             totalCount
             nodes {
         `;
@@ -460,17 +460,35 @@ export const GITHUB_PROJECT_REPOSITORY_MILESTONES_AND_QUERY = function (
  * @param {string} login_name - The login name of the GitHub organization
  * @return {string} A GraphQL query string to fetch organization details
  */
-export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) {
+export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string, organization_scopes: GITHUB_ORGANIZATION_SCOPES[], page_sizes: PageSize<GITHUB_ORGANIZATION_SCOPES>[]) {
+    const doFetchEssential = organization_scopes.includes(GITHUB_ORGANIZATION_SCOPES.ESSENTIAL);
+    const doFetchInfo = organization_scopes.includes(GITHUB_ORGANIZATION_SCOPES.INFO);
+    const doFetchPackages = organization_scopes.includes(GITHUB_ORGANIZATION_SCOPES.PACKAGES);
+    const doFetchRepositories = organization_scopes.includes(GITHUB_ORGANIZATION_SCOPES.REPOSITORIES);
+    const doFetchTeams = organization_scopes.includes(GITHUB_ORGANIZATION_SCOPES.TEAMS);
+    const doFetchProjects = organization_scopes.includes(GITHUB_ORGANIZATION_SCOPES.PROJECTS);
+
+    const pageSize = 10;
+    const pageSizesAreValid = page_sizes && Array.isArray(page_sizes);
+    const packagePageSize = pageSizesAreValid ? page_sizes?.find((size) => size.scopeName === GITHUB_ORGANIZATION_SCOPES.PACKAGES)?.pageSize : pageSize;
+    const repositoryPageSize = pageSizesAreValid ? page_sizes?.find((size) => size.scopeName === GITHUB_ORGANIZATION_SCOPES.REPOSITORIES)?.pageSize : pageSize;
+    const teamsPageSize = pageSizesAreValid ? page_sizes?.find((size) => size.scopeName === GITHUB_ORGANIZATION_SCOPES.TEAMS)?.pageSize : pageSize;
+    const projectPageSize = pageSizesAreValid ? page_sizes?.find((size) => size.scopeName === GITHUB_ORGANIZATION_SCOPES.PROJECTS)?.pageSize : pageSize;
+
     return `{
         organization(login: "${login_name}") {
-            login
+            ${doFetchEssential ? `
             name
             description
-            email
             url
+            avatarUrl
+            ` : ""}
+
+            ${doFetchInfo ? `
+            login
+            email
             
             websiteUrl
-            avatarUrl
             
             createdAt
             updatedAt
@@ -478,8 +496,10 @@ export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) {
             location
             
             announcement
-            
-            packages(first: 10) {
+            ` : ""}
+
+            ${doFetchPackages ? `
+            packages(first: ${packagePageSize}) {
                 totalCount
                 nodes {
                     name
@@ -501,11 +521,15 @@ export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) {
                     }
                 }
             }
+            ` : ""}
 
-            ${GITHUB_REPOSITORY(GRAMMATICAL_NUMBER.PLURAL)}
-            
+            ${doFetchRepositories ? `
+            ${GITHUB_REPOSITORY(GRAMMATICAL_NUMBER.PLURAL, undefined, undefined, repositoryPageSize)}
+            ` : ""}
+
+            ${doFetchTeams ? `
             teamsUrl
-            teams(first: 10) {
+            teams(first: ${teamsPageSize}) {
                 totalCount
                 nodes {
                     avatarUrl
@@ -529,9 +553,11 @@ export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) {
                     }
                 }
             }
+            ` : ""}
             
+            ${doFetchProjects ? `
             projectsUrl
-            projectsV2(first: 100) {
+            projectsV2(first: ${projectPageSize}) {
                 totalCount
                 nodes {
                     number
@@ -545,6 +571,7 @@ export const GITHUB_ORGANIZATION_BY_NAME = function (login_name: string) {
                     url
                 }
             }
+            ` : ""}
         }
     }`;
 }
