@@ -52,10 +52,10 @@ export enum GraphqlResponseErrorCode {
 
 /* ENDPOINTS */
 
-export type PageSize<T> = {
+export interface PageSize<T> {
     scopeName: T;
     pageSize: number;
-    ContinueAfter?: string | null;
+    continueAfter?: string | undefined | null;
 }
 
 export enum GRAMMATICAL_NUMBER {
@@ -74,8 +74,7 @@ export enum GITHUB_ACCOUNT_SCOPES {
     INFO = "info",
     PACKAGES = "packages",
     PROJECTS = "projects",
-    ESSENTIAL = "essential",
-    ALL = "all"
+    ESSENTIAL = "essential"
 }
 
 export enum GITHUB_PROJECT_SCOPES {
@@ -86,6 +85,7 @@ export enum GITHUB_PROJECT_SCOPES {
 export enum GITHUB_REPOSITORY_SCOPES {
     COUNT = "count",
     INFO = "info",
+    ESSENTIAL = "essential",
     LICENSE = "license",
     VULNERABILITIES = "vulnerabilities",
     TOPICS = "topics",
@@ -94,8 +94,7 @@ export enum GITHUB_REPOSITORY_SCOPES {
     DEPLOYMENTS = "deployments",
     LANGUAGES = "languages",
     MILESTONES = "milestones",
-    ISSUES = "issues",
-    ALL = "all"
+    ISSUES = "issues"
 }
 
 export enum GITHUB_MILESTONE_ISSUE_STATES {

@@ -1,5 +1,5 @@
 import { Repository } from "./scopes";
-import { GITHUB_REPOSITORY_SCOPES, GITHUB_PROJECT_SCOPES, PageSize, GRAMMATICAL_NUMBER } from "./types";
+import { GITHUB_REPOSITORY_SCOPES, GITHUB_PROJECT_SCOPES, PageSize, GRAMMATICAL_NUMBER, GITHUB_MILESTONE_ISSUE_STATES } from "./types";
 
 export const GITHUB_QUOTA = `{
     rateLimit {
@@ -21,7 +21,7 @@ export const Project = (project_name: string | number, project_scopes: GITHUB_PR
         `projectV2(number: ${project_name}) {`; // fetch by name or id
     const tail = name_is_text ? "}" : "";
 
-    // TODO: implement pagination
+    // TODO: implement pagination for when fetched with name and not id
 
     const query = `
     ${head}
@@ -47,14 +47,13 @@ export const Project = (project_name: string | number, project_scopes: GITHUB_PR
     return query;
 }
 
-// TODO: issues states
-// milestones amount
-// count option as query parameter
-
 export const getAllRepositoriesInProject = (
     project_name: string | number,
     project_scopes: GITHUB_PROJECT_SCOPES[],
-    repository_scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[]
+    repository_scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[],
+    issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null,
+    milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
+    milestone_number: number | null = null
 ) => {
     const repository = new Repository({
         scopes: repository_scopes
@@ -63,7 +62,7 @@ export const getAllRepositoriesInProject = (
     return Project(
         project_name,
         project_scopes,
-        repository.getQuery(null, GRAMMATICAL_NUMBER.PLURAL, null, true, true)
+        repository.getQuery(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number, false, true)
     );
 }
 

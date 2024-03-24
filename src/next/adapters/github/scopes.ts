@@ -113,12 +113,12 @@ export class OrganizationFetcher {
                 case GITHUB_ACCOUNT_SCOPES.PACKAGES:
                     this.#doFetchPackages = true;
                     this.#packagePageSize = ps.pageSize;
-                    this.#packagesContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#packagesContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_ACCOUNT_SCOPES.PROJECTS:
                     this.#doFetchProjects = true;
                     this.#projectPageSize = ps.pageSize;
-                    this.#projectsContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#projectsContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 default:
                     break;
@@ -126,9 +126,9 @@ export class OrganizationFetcher {
         }
     }
 
-    #validateCursor(ContinueAfter: string | undefined | null) {
-        if (ContinueAfter && ContinueAfter !== "null" && ContinueAfter !== "undefined") {
-            return `"${ContinueAfter}"`;
+    #validateCursor(continueAfter: string | undefined | null) {
+        if (continueAfter && continueAfter !== "null" && continueAfter !== "undefined") {
+            return `"${continueAfter}"`;
         }
 
         return null;
@@ -267,12 +267,12 @@ export class UserFetcher {
                 case GITHUB_ACCOUNT_SCOPES.PACKAGES:
                     this.#doFetchPackages = true;
                     this.#packagePageSize = ps.pageSize;
-                    this.#packagesContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#packagesContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_ACCOUNT_SCOPES.PROJECTS:
                     this.#doFetchProjects = true;
                     this.#projectPageSize = ps.pageSize;
-                    this.#projectsContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#projectsContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 default:
                     break;
@@ -280,9 +280,9 @@ export class UserFetcher {
         }
     }
 
-    #validateCursor(ContinueAfter: string | undefined | null) {
-        if (ContinueAfter && ContinueAfter !== "null" && ContinueAfter !== "undefined") {
-            return `"${ContinueAfter}"`;
+    #validateCursor(continueAfter: string | undefined | null) {
+        if (continueAfter && continueAfter !== "null" && continueAfter !== "undefined") {
+            return `"${continueAfter}"`;
         }
 
         return null;
@@ -460,92 +460,65 @@ export class Repository {
         if (this.#log) console.info("parsing scopes");
 
         for (const ps of pageSizes) {
-            switch (ps.scopeName) {
-                case GITHUB_REPOSITORY_SCOPES.ALL:
-                    this.#count_nodes = true;
-
-                    this.#doFetchEssential = true;
-                    this.#doFetchInfo = true;
-                    this.#doFetchLicense = true;
-                    this.#doFetchVulnerabilities = true;
-                    this.#doFetchTopics = true;
-                    this.#doFetchLabels = true;
-                    this.#doFetchReleases = true;
-                    this.#doFetchDeployments = true;
-                    this.#doFetchLanguages = true;
-                    this.#doFetchMilestones = true;
-                    this.#doFetchIssues = true;
-
-                    this.#rootPageSize = ps.pageSize;
-                    this.#vulnerabilitiesPageSize = ps.pageSize;
-                    this.#topicsPageSize = ps.pageSize;
-                    this.#labelsPageSize = ps.pageSize;
-                    this.#releasesPageSize = ps.pageSize;
-                    this.#deploymentsPageSize = ps.pageSize;
-                    this.#languagesPageSize = ps.pageSize;
-                    this.#milestonesPageSize = ps.pageSize;
-                    this.#issuesPageSize = ps.pageSize;
-
-                    this.#rootContinueAfter = this.#validateCursor(ps.ContinueAfter);
-                    this.#vulnerabilitiesContinueAfter = this.#validateCursor(ps.ContinueAfter);
-                    this.#topicsContinueAfter = this.#validateCursor(ps.ContinueAfter);
-                    this.#labelsContinueAfter = this.#validateCursor(ps.ContinueAfter);
-                    this.#releasesContinueAfter = this.#validateCursor(ps.ContinueAfter);
-                    this.#deploymentsContinueAfter = this.#validateCursor(ps.ContinueAfter);
-                    this.#languagesContinueAfter = this.#validateCursor(ps.ContinueAfter);
-                    this.#milestonesContinueAfter = this.#validateCursor(ps.ContinueAfter);
-                    this.#issuesContinueAfter = this.#validateCursor(ps.ContinueAfter);
+            switch (ps.scopeName) { // if the scope doesn't have children, pageSize and continueAfter is for the root (repositories)
+                case GITHUB_REPOSITORY_SCOPES.ESSENTIAL:
+                    this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
+                    this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
-                case GITHUB_REPOSITORY_SCOPES.INFO: // for the root (if fetching multiple repositories(first: this.#pageSize))
+                case GITHUB_REPOSITORY_SCOPES.INFO:
                     this.#doFetchInfo = true;
                     this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
-                    this.#rootContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.DEPLOYMENTS:
                     this.#doFetchDeployments = true;
                     this.#deploymentsPageSize = ps.pageSize;
-                    this.#deploymentsContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#deploymentsContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.LABELS:
                     this.#doFetchLabels = true;
                     this.#labelsPageSize = ps.pageSize;
-                    this.#labelsContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#labelsContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.RELEASES:
                     this.#doFetchReleases = true;
                     this.#releasesPageSize = ps.pageSize;
-                    this.#releasesContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#releasesContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.TOPICS:
                     this.#doFetchTopics = true;
                     this.#topicsPageSize = ps.pageSize;
-                    this.#topicsContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#topicsContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.VULNERABILITIES:
                     this.#doFetchVulnerabilities = true;
                     this.#vulnerabilitiesPageSize = ps.pageSize;
-                    this.#vulnerabilitiesContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#vulnerabilitiesContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.LANGUAGES:
                     this.#doFetchLanguages = true;
                     this.#languagesPageSize = ps.pageSize;
-                    this.#languagesContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#languagesContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.MILESTONES:
                     this.#doFetchMilestones = true;
                     this.#milestonesPageSize = ps.pageSize;
-                    this.#milestonesContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#milestonesContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.ISSUES:
                     this.#doFetchIssues = true;
                     this.#issuesPageSize = ps.pageSize;
-                    this.#issuesContinueAfter = this.#validateCursor(ps.ContinueAfter);
+                    this.#issuesContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.LICENSE:
                     this.#doFetchLicense = true;
+                    this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
+                    this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 case GITHUB_REPOSITORY_SCOPES.COUNT:
                     this.#count_nodes = true;
+                    this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
+                    this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
                     break;
                 default:
                     break;
@@ -553,16 +526,16 @@ export class Repository {
         }
     }
 
-    #validateCursor(ContinueAfter: string | undefined | null) {
-        if (ContinueAfter && ContinueAfter !== "null" && ContinueAfter !== "undefined") {
-            return `"${ContinueAfter}"`;
+    #validateCursor(continueAfter: string | undefined | null) {
+        if (continueAfter && continueAfter !== "null" && continueAfter !== "undefined") {
+            return `"${continueAfter}"`;
         }
 
         return null;
     }
 
     getQuery(issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null, milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null, count_nodes = false, log = false) {
-        this.#count_nodes = count_nodes;
+        this.#count_nodes = this.#count_nodes ? true : count_nodes; // use passed one or overwrite with count_nodes for debugging
         this.#log = log;
 
         let query = this.#getInfoQuery();
@@ -985,35 +958,48 @@ export class Repository {
      * Supports both issues and milestones.
      */
     #milestonesBody(issues_state: GITHUB_MILESTONE_ISSUE_STATES[], milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null) {
-        const head = milestones_amount === GRAMMATICAL_NUMBER.SINGULAR && milestone_number ?
+        console.log(issues_state, milestones_amount, milestone_number);
+
+        const IS_SINGULAR = milestones_amount === GRAMMATICAL_NUMBER.SINGULAR;
+        const head = IS_SINGULAR && milestone_number ?
             `milestone(number: ${milestone_number})` :
             `milestones(first: ${this.#milestonesPageSize}, after: ${this.#milestonesContinueAfter})`;
 
-        if (this.#doFetchMilestones && this.#doFetchIssues) {
+        const info_body = `
+        createdAt
+        closedAt
+        description
+        dueOn
+        progressPercentage
+        title
+        updatedAt
+        url
+        state
+        `;
+
+        if (this.#doFetchMilestones) {
             if (this.#log) console.info("fetching milestones and issues");
 
             return `
                 ${head} {
-                    ${this.#count_nodes ? "totalCount" : ""}
+                    ${IS_SINGULAR ? `
+                    ${info_body}
 
+                    ${this.#issuesBody(issues_state)}
+                    ` : `
+                    ${this.#count_nodes ? "totalCount" : ""}
+                    
                     pageInfo {
                         endCursor
                         hasNextPage
                     }
 
                     nodes {
-                        createdAt
-                        closedAt
-                        description
-                        dueOn
-                        progressPercentage
-                        title
-                        updatedAt
-                        url
-                        state
+                        ${info_body}
         
                         ${this.#issuesBody(issues_state)}
                     }
+                    `}
                 }`;
         }
 

@@ -124,7 +124,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             setup_action: t.Const("install")
         }),
         detail: {
-            description: "",
+            description: "Authenticate using a GitHub App.",
             tags: ['github', 'authentication']
         }
     })
@@ -164,7 +164,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             return bearerToken;
         },
         detail: {
-            description: "",
+            description: "Authenticate using a GitHub PAT.",
             tags: ['github', 'authentication']
         }
     });
