@@ -1,6 +1,6 @@
 {
   "name": "rest",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
@@ -8,7 +8,7 @@
     "format-organize-lint": "bunx @biomejs/biome format . --write"
   },
   "dependencies": {
-    "@bogeychan/elysia-logger": "^0.0.18",
+    "@bogeychan/elysia-logger": "^0.0.19",
     "@elysiajs/bearer": "^1.0.2",
     "@elysiajs/cors": "^1.0.2",
     "@elysiajs/html": "^1.0.2",

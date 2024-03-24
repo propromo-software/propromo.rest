@@ -122,7 +122,7 @@ export const ROOT_PATHS = [
 	"/about",
 	"/links",
 ];
-export const ROOT_ROUTES = new Elysia({ prefix: "" });
+export const ROOT_ROUTES = new Elysia();
 for (const path of ROOT_PATHS) {
 	ROOT_ROUTES.get(path, () => ROOT);
 }

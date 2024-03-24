@@ -1,15 +1,15 @@
 import { Elysia } from "elysia"; // https://elysiajs.com/introduction.html
 import { cors } from '@elysiajs/cors'; // https://elysiajs.com/plugins/cors.html
-import { html } from '@elysiajs/html'; // https://elysiajs.com/plugins/html.html
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
-import { type InferContext, logger } from '@bogeychan/elysia-logger'; // https://www.npmjs.com/package/@bogeychan/elysia-logger
+import { /* type InferContext, */ logger } from '@bogeychan/elysia-logger'; // https://www.npmjs.com/package/@bogeychan/elysia-logger
+import { html } from "@elysiajs/html"; // https://elysiajs.com/plugins/html.html
 
 import { API_FORWARD_ROUTES, CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { V0 } from "./v0";
 import { v1 } from "./v1";
+import { next } from "./next";
 
-// @ts-ignore
-const app: Elysia = new Elysia()
+const app = new Elysia()
   .use(staticPlugin({ // serve static files from the "static" directory
     assets: "static",
     prefix: "/"
@@ -17,13 +17,10 @@ const app: Elysia = new Elysia()
   .use(cors({
     origin: CORS_ORIGINS
   }))
-  .use(
+  /* .use(logger({ autoLogging: true })) */
+  /* .use(
     logger({
       level: 'error',
-      /**
-       * This function will be invoked for each `log`-method called with `context`
-       * where you can pass additional properties that need to be logged
-       */
       customProps(ctx: InferContext<typeof app>) {
         return {
           params: ctx.params,
@@ -31,7 +28,7 @@ const app: Elysia = new Elysia()
         };
       }
     })
-  )
+  ) */
   .use(html())
   .use(ROOT_ROUTES)
 
@@ -51,8 +48,8 @@ const app: Elysia = new Elysia()
       }
     })
   )
-  .use(V0)
-  .use(v1)
+
+  .use(next)
 
   .listen(process.env.PORT || 3000);
 
