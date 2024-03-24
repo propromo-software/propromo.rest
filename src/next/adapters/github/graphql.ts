@@ -1,5 +1,6 @@
 import { Repository } from "./scopes";
 import { GITHUB_REPOSITORY_SCOPES, GITHUB_PROJECT_SCOPES, PageSize, GRAMMATICAL_NUMBER, GITHUB_MILESTONE_ISSUE_STATES } from "./types";
+const DEV_MODE = process.env.DEV_MODE! === "true";
 
 export const GITHUB_QUOTA = `{
     rateLimit {
@@ -42,7 +43,7 @@ export const Project = (project_name: string | number, project_scopes: GITHUB_PR
         ${tail}
     }`
 
-    console.log(query)
+    if (DEV_MODE) console.log("Project(...)"); console.log(query);
 
     return query;
 }
@@ -62,7 +63,7 @@ export const getAllRepositoriesInProject = (
     return Project(
         project_name,
         project_scopes,
-        repository.getQuery(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number, false, true)
+        repository.getQuery(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number)
     );
 }
 
@@ -76,7 +77,7 @@ export const AccountScopeEntryRoot = (login_name: string, query_children: string
         }
     }`
 
-    console.log(query);
+    if (DEV_MODE) console.log("AccountScopeEntryRoot(...)"); console.log(query);
 
     return query;
 }

@@ -1,4 +1,5 @@
 import { GITHUB_ACCOUNT_SCOPES, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES, GRAMMATICAL_NUMBER, type PageSize } from "./types";
+const DEV_MODE = process.env.DEV_MODE! === "true";
 
 // JS doesn't allow inheriting private (_<property/function>) properties and functions and protected ones (_<property/function>) have getters and setters per default, because they are just a convention and have to be implemented by the programmer :).
 // It is not possible to make private properties inheritable in JavaScript, as the private properties of a class are not inherited by its subclasses. This is because private properties are not part of the class's public interface, and they are not accessible from outside the class.
@@ -91,6 +92,9 @@ export class OrganizationFetcher {
     #log = false;
 
     constructor(name: string, scopes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
+        this.#log = DEV_MODE;
+        this.#count_nodes = DEV_MODE;
+
         this.#name = name;
 
         this.#packagePageSize = AccountFetcher.defaultPageSize;
@@ -134,10 +138,7 @@ export class OrganizationFetcher {
         return null;
     }
 
-    getQuery(count_nodes = false, log = false) {
-        this.#count_nodes = count_nodes;
-        this.#log = log;
-
+    getQuery() {
         if (this.#log) console.info("settings: ", {
             doFetchEssential: this.#doFetchEssential,
             doFetchInfo: this.#doFetchInfo,
@@ -245,6 +246,9 @@ export class UserFetcher {
     #log = false;
 
     constructor(name: string, scopes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
+        this.#log = DEV_MODE;
+        this.#count_nodes = DEV_MODE;
+
         this.#name = name;
 
         this.#packagePageSize = AccountFetcher.defaultPageSize;
@@ -288,10 +292,7 @@ export class UserFetcher {
         return null;
     }
 
-    getQuery(count_nodes = false, log = false) {
-        this.#count_nodes = count_nodes;
-        this.#log = log;
-
+    getQuery() {
         if (this.#log) console.info("settings: ", {
             doFetchEssential: this.#doFetchEssential,
             doFetchInfo: this.#doFetchInfo,
@@ -439,6 +440,8 @@ export class Repository {
         { name: string, scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] } |
         { scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] }
     ) {
+        this.#log = DEV_MODE;
+
         if ("name" in args) {
             this.#name = args.name;
         }
@@ -534,10 +537,7 @@ export class Repository {
         return null;
     }
 
-    getQuery(issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null, milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null, count_nodes = false, log = false) {
-        this.#count_nodes = this.#count_nodes ? true : count_nodes; // use passed one or overwrite with count_nodes for debugging
-        this.#log = log;
-
+    getQuery(issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null, milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null) {
         let query = this.#getInfoQuery();
 
         if (this.#doFetchMilestones || this.#doFetchIssues) {
@@ -958,8 +958,6 @@ export class Repository {
      * Supports both issues and milestones.
      */
     #milestonesBody(issues_state: GITHUB_MILESTONE_ISSUE_STATES[], milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null) {
-        console.log(issues_state, milestones_amount, milestone_number);
-
         const IS_SINGULAR = milestones_amount === GRAMMATICAL_NUMBER.SINGULAR;
         const head = IS_SINGULAR && milestone_number ?
             `milestone(number: ${milestone_number})` :
