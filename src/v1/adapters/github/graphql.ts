@@ -12,7 +12,8 @@ export const GITHUB_QUOTA = `{
 }`;
 
 /**
- * Helper function that returns the Github GraphQl query part needed for the fetching of a **project** using the parent query as root. (multiple can be fetched at the organization level)
+ * Helper function that returns the Github GraphQl query part needed for the fetching of a **project** using the parent query as root.  
+ * Multiple can be fetched at the organization level
  */
 export const Project = (project_name: string | number, project_scopes: GITHUB_PROJECT_SCOPES[], repository_query: string | null = null) => {
     const name_is_text = typeof project_name === "string";
@@ -46,6 +47,17 @@ export const Project = (project_name: string | number, project_scopes: GITHUB_PR
     return query;
 }
 
+/**
+ * Retrieves all repositories in a project, if passed as `query_children` to `AccountScopeEntryRoot(...)`.
+ *
+ * @param {string | number} project_name - The name or ID of the project.
+ * @param {GITHUB_PROJECT_SCOPES[]} project_scopes - The scopes of the project.
+ * @param {PageSize<GITHUB_REPOSITORY_SCOPES>[]} repository_scopes - The scopes of the repositories.
+ * @param {GITHUB_MILESTONE_ISSUE_STATES[] | null} issues_states - The states of the milestone issues.
+ * @param {GRAMMATICAL_NUMBER} [milestones_amount=GRAMMATICAL_NUMBER.PLURAL] - The amount of milestones.
+ * @param {number | null} [milestone_number=null] - The number of the milestone.
+ * @return {unknown} The result of the function.
+ */
 export const getAllRepositoriesInProject = (
     project_name: string | number,
     project_scopes: GITHUB_PROJECT_SCOPES[],
@@ -66,7 +78,14 @@ export const getAllRepositoriesInProject = (
 }
 
 /**
- * Parameter query_children can be `getRepositoryByName(...)` or `getAllRepositoriesInProject(...)` for example. Basically any scope that is under `user` and `organization`.
+ * Generates a GraphQL query for the root of an account scope entry.  
+ * Parameter `query_children` can be `getRepositoryByName(...)` or `getAllRepositoriesInProject(...)` for example. Basically any scope that is under `user` and `organization`.
+ *
+ *
+ * @param {string} login_name - The login name of the user or organization.
+ * @param {string} query_children - The query for the children of the account scope entry.
+ * @param {"user" | "organization"} login_type - The type of the login (default is "organization").
+ * @return {string} The generated GraphQL query.
  */
 export const AccountScopeEntryRoot = (login_name: string, query_children: string, login_type: "user" | "organization" = "organization") => {
     const query = `{
