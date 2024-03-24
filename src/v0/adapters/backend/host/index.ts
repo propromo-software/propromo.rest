@@ -1,10 +1,10 @@
-import { Elysia } from "elysia"; // https://elysiajs.com/introduction.html
+import { Elysia } from "elysia";
 import bearer from '@elysiajs/bearer';
 import { Heroku } from "./heroku";
 
-export const PROPROMO_BACKEND_SERVICE = new Elysia({ prefix: '/backend' }) /* 💀 */
+export const PROPROMO_BACKEND_SERVICE = new Elysia({ prefix: '/backend' })
     .use(bearer())
-    .post('/drop-and-create-tables', async({ bearer }) => bearer, {
+    .post('/drop-and-create-tables', async ({ bearer }) => bearer, {
         async beforeHandle({ bearer, set }) {
             const token = bearer;
 
@@ -33,6 +33,6 @@ export const PROPROMO_BACKEND_SERVICE = new Elysia({ prefix: '/backend' }) /* �
         },
         detail: {
             description: "Create and drop tables in the database. 💀",
-            tags: ["backend", "database", "heroku"]
+            tags: ["backend"]
         }
     });

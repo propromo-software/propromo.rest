@@ -6,7 +6,7 @@ import bearer from '@elysiajs/bearer';
 
 export const guardEndpoints = (endpoints: Elysia) => new Elysia({
     name: 'guardEndpoints-plugin',
-    seed: endpoints
+    seed: endpoints,
 })
     .use(bearer())
     .use(GITHUB_JWT)

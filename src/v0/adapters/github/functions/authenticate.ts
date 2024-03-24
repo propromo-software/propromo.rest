@@ -1,11 +1,11 @@
-import { type Context, Elysia, t } from "elysia";
+import { Context, Elysia, t } from "elysia";
 import jwt from '@elysiajs/jwt';
 import { octokitApp } from "./app";
 import { Octokit } from "octokit";
-import { GITHUB_AUTHENTICATION_STRATEGY_OPTIONS, type TokenVerifier } from "../types";
+import { GITHUB_AUTHENTICATION_STRATEGY_OPTIONS, TokenVerifier } from "../types";
 import bearer from '@elysiajs/bearer';
 import { fetchGithubDataUsingGraphql } from "./fetch";
-import type { RateLimit } from "@octokit/graphql-schema";
+import { RateLimit } from "@octokit/graphql-schema";
 import { GITHUB_QUOTA } from "../graphql";
 
 /* JWT */
@@ -21,17 +21,6 @@ export const GITHUB_JWT = new Elysia()
             iss: "propromo"
         })
     )
-
-export const RESOLVE_JWT = new Elysia()
-    .use(GITHUB_JWT)
-    .resolve({ as: 'scoped' }, async ({ propromoRestAdaptersGithub, headers: { authorization }, set }) => {
-        return {
-            fetchParams: await resolveJwtPayload<typeof propromoRestAdaptersGithub>(propromoRestAdaptersGithub, authorization, set)
-        }
-    })
-    .onBeforeHandle({ as: 'scoped' }, ({ fetchParams }) => {
-        if (!fetchParams) return "Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.";
-    })
 
 /* APP AND TOKEN AUTHENTICATION */
 
@@ -49,16 +38,16 @@ async function checkIfTokenIsValid(token: string, set: Context["set"]): Promise<
         set
     );
 
-    if (!response.success || (response?.data === undefined)) {
+    if (!response.success || (response?.data == undefined)) {
         set.status = 401;
         set.headers[
             'WWW-Authenticate'
         ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
 
-        return `The provided token is invalid or has expired. Please try another token. Perhaps you chose the wrong provider? [${response?.error}]` ?? '';
+        return 'The provided token is invalid or has expired. Please try another token. Perhaps you chose the wrong provider? ' + "[" + response?.error + "]" ?? '';
+    } else {
+        return true;
     }
-
-    return true;
 }
 
 export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
@@ -124,7 +113,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             setup_action: t.Const("install")
         }),
         detail: {
-            description: "Authenticate using a GitHub App.",
+            description: "",
             tags: ['github', 'authentication']
         }
     })
@@ -164,15 +153,20 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             return bearerToken;
         },
         detail: {
-            description: "Authenticate using a GitHub PAT.",
+            description: "",
             tags: ['github', 'authentication']
         }
     });
 
 /**
  * Retrieves the payload from the given token verifier and sets the status and headers if the payload is invalid. Returns the payload if it is valid, or 'Unauthorized' if it is invalid.
+ *
+ * @param {T} realm - The token verifier instance.
+ * @param {string | undefined} bearer - The bearer token to verify.
+ * @param {Context["set"]} set - The set function from the context.
+ * @return {Promise<{payload: any}> | string} - Returns the payload if it is valid, or 'Unauthorized' if it is invalid.
  */
-export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: string | undefined, set: Context["set"]) {
+export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: string | undefined, set: Context["set"]): Promise<string | { payload: any; }> {
     const payloadPromise = realm.verify(bearer);
     const payload = await payloadPromise;
 
@@ -191,42 +185,47 @@ export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: s
 }
 
 /**
- * Resolves the JWT payload for the given token verifier
+ * Resolves the JWT payload for the given token verifier.
+ *
+ * @param {T} realm - The token verifier.
+ * @param {string | undefined} authorization - The authorization header value.
+ * @param {Context["set"]} set - The set function from the context.
+ * @return {Promise<{ fetchParams: { [key: string]: string }; } | { payload: null } | null>} - The resolved JWT payload or null if there was an error.
  */
-export async function resolveJwtPayload<T extends TokenVerifier>(realm: T, authorization: string | undefined, set: Context["set"]) {
+export async function resolveJwtPayload<T extends TokenVerifier>(realm: T, authorization: string | undefined, set: Context["set"]): Promise<{ fetchParams: { [key: string]: string; }; } | { payload: null; } | null> {
     if (!authorization) {
         set.status = 400;
         set.headers[
             'WWW-Authenticate'
         ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`;
 
-        /* return {
+        return {
             payload: null
-        } */
+        }
     }
 
     const bearer = authorization?.split(' ')[1]; // Authorization: Bearer <token>
     const jwt = await getJwtPayload<typeof realm>(realm, bearer, set);
-    /* if (typeof jwt === 'string') {
+    if (typeof jwt === 'string') {
         return null;
-    } */
+    }
 
     return {
-        ...getFetchParams(jwt)
+        fetchParams: {
+            ...getFetchParams(jwt)
+        }
     }
 }
 
 /**
  * Generate fetch parameters based on the JWT payload.
+ *
+ * @param {any} jwt - the JWT payload
+ * @return {Object} object containing auth_type and auth
  */
-
-// biome-ignore lint/suspicious/noExplicitAny:
-function getFetchParams(jwt: string | { payload: any; }) {
-    // @ts-ignore
+function getFetchParams(jwt: any): object {
     const auth_type = jwt?.payload?.token ? GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN : GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP;
-    // @ts-ignore
     const installation_id: number = jwt?.payload?.installation_id;
-    // @ts-ignore
     const token: string = jwt?.payload?.token;
     const auth = auth_type === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP && installation_id ? installation_id : token;
 
@@ -241,8 +240,12 @@ function getFetchParams(jwt: string | { payload: any; }) {
 /**
  * Generates an Octokit object based on the provided authentication strategy and credentials.
  * @documentation https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#using-octokitjs-to-authenticate-with-an-installation-id
+ *
+ * @param {GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null} authStrategy - The authentication strategy options or null
+ * @param {string | null} auth - The authentication token or null
+ * @return {Octokit | null} The Octokit object or null
  */
-export async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null, auth: string | number | null): Promise<Octokit | null> {
+export async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null, auth: string | number | null): Promise<Octokit | null> {
     let octokitObject = null;
 
     if (typeof auth === "string" && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN)) {

@@ -52,15 +52,15 @@ export enum GraphqlResponseErrorCode {
 
 /* ENDPOINTS */
 
-export interface PageSize<T> {
+export type PageSize<T> = {
     scopeName: T;
     pageSize: number;
-    continueAfter?: string | undefined | null;
 }
 
 export enum GRAMMATICAL_NUMBER {
     SINGULAR = 1,
     PLURAL = 0,
+    DEFAULT = -1
 }
 
 export enum GITHUB_AUTHENTICATION_STRATEGY_OPTIONS {
@@ -68,32 +68,49 @@ export enum GITHUB_AUTHENTICATION_STRATEGY_OPTIONS {
     APP = "APP"
 }
 
-/* SCOPES */
-
-export enum GITHUB_ACCOUNT_SCOPES {
+export enum GITHUB_ORGANIZATION_SCOPES {
     INFO = "info",
     PACKAGES = "packages",
+    REPOSITORIES = "repositories",
+    TEAMS = "teams",
     PROJECTS = "projects",
-    ESSENTIAL = "essential"
-}
-
-export enum GITHUB_PROJECT_SCOPES {
-    INFO = "info",
-    REPOSITORIES_LINKED = "repositories"
+    ESSENTIAL = "essential",
+    ALL = "all"
 }
 
 export enum GITHUB_REPOSITORY_SCOPES {
     COUNT = "count",
     INFO = "info",
-    ESSENTIAL = "essential",
     LICENSE = "license",
     VULNERABILITIES = "vulnerabilities",
     TOPICS = "topics",
     LABELS = "labels",
     RELEASES = "releases",
     DEPLOYMENTS = "deployments",
-    LANGUAGES = "languages",
     MILESTONES = "milestones",
+    ISSUES = "issues",
+    ALL = "all"
+}
+
+export enum GITHUB_PROJECT_SCOPES {
+    INFO = "root",
+    REPOSITORIES_LINKED = "repositories"
+}
+
+export type GITHUB_PROJECT_INPUT_SCOPES = GITHUB_PROJECT_SCOPES[] | { project_scopes: GITHUB_PROJECT_SCOPES[], repository_scopes: null | GITHUB_REPOSITORY_SCOPES[] };
+export const GITHUB_PROJECT_INPUT_SCOPES_AS_OBJECT = {
+    OPTION_1: Object.values(GITHUB_PROJECT_SCOPES).join(" | "),
+    OPTION_2: {
+        project_scopes: Object.values(GITHUB_PROJECT_SCOPES).join(" | "),
+        repository_scopes: {
+            OPTION_1: null,
+            OPTION_2: Object.values(GITHUB_REPOSITORY_SCOPES).join(" | ")
+        }
+    }
+}
+
+export enum GITHUB_MILESTONES_DEPTH {
+    INFO = "info",
     ISSUES = "issues"
 }
 

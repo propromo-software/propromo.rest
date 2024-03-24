@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+const DEV_MODE = process.env.DEV_MODE! === "true";
 
 // biome-ignore lint/complexity/noStaticOnlyClass:
 export abstract class Heroku { // only possible with their cli-tool (see https://stackoverflow.com/questions/78073975/heroku-run-via-their-node-heroku-client)
@@ -16,7 +17,7 @@ export abstract class Heroku { // only possible with their cli-tool (see https:/
       }
     }
 
-    console.log(response);
+    if (DEV_MODE) console.log(response);
 
     return response;
   }
@@ -30,7 +31,7 @@ export abstract class Heroku { // only possible with their cli-tool (see https:/
       const log = [] as string[];
 
       herokuRun.stdout.on('data', (data: string) => {
-        console.log(`stdout: ${data}`);
+        if (DEV_MODE) console.log(`stdout: ${data}`);
         log.push(`${data}`);
 
         if (data.includes('Are you sure you want to run this command?')) {
@@ -42,17 +43,17 @@ export abstract class Heroku { // only possible with their cli-tool (see https:/
 
       // biome-ignore lint/suspicious/noExplicitAny:
       herokuRun.stderr.on('data', (data: any) => {
-        console.error(`stderr: ${data}`);
+        if (DEV_MODE) console.error(`stderr: ${data}`);
       });
 
       // biome-ignore lint/suspicious/noExplicitAny:
       herokuRun.on('exit', (code: any) => {
-        console.log(`child exited with code ${code}`);
+        if (DEV_MODE) console.log(`child exited with code ${code}`);
 
         if (code === 0) {
           // biome-ignore lint/suspicious/noControlCharactersInRegex:
           const sanitizedLog = log.join('').replace(/\u001B\[[0-9;]*[mBDA]/g, ''); // sanitize the log from ansi escape codes, so that the includes condition doesn't fail
-          console.log(sanitizedLog);
+          if (DEV_MODE) console.log(sanitizedLog);
 
           if (sanitizedLog.includes('Dropping all tables')) {
             result = true;
@@ -70,7 +71,7 @@ export abstract class Heroku { // only possible with their cli-tool (see https:/
 /* (async () => {
   try {
     let result = await Heroku.dropAndCreateTables();
-    console.log(result);
+    if (DEV_MODE) console.log(result);
   } catch (error) {
     console.error(error);
   }
