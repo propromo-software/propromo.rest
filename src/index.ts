@@ -1,8 +1,8 @@
 import { Elysia } from "elysia"; // https://elysiajs.com/introduction.html
 import { cors } from '@elysiajs/cors'; // https://elysiajs.com/plugins/cors.html
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
-import { /* type InferContext, */ logger } from '@bogeychan/elysia-logger'; // https://www.npmjs.com/package/@bogeychan/elysia-logger
 import { html } from "@elysiajs/html"; // https://elysiajs.com/plugins/html.html
+import { /* type InferContext, */ logger } from '@bogeychan/elysia-logger'; // https://www.npmjs.com/package/@bogeychan/elysia-logger
 
 import { API_FORWARD_ROUTES, CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { v1 } from "./v1";
@@ -16,6 +16,7 @@ const app = new Elysia()
     origin: CORS_ORIGINS
   }))
   .use(logger({ autoLogging: true }))
+  // add logger back in, if it is updated, to work with the current version of Elysia
   /* .use(
     logger({
       level: 'error',

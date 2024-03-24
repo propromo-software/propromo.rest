@@ -26,10 +26,10 @@ export const PROPROMO_BACKEND_SERVICE = new Elysia({ prefix: '/backend' })
                 ] = `Bearer, error="invalid_token"`;
 
                 return 'Unauthorized 💀';
-            } else {
-                let result = await Heroku.dropAndCreateTables();
-                return result;
             }
+
+            const result = await Heroku.dropAndCreateTables();
+            return result;
         },
         detail: {
             description: "Create and drop tables in the database. 💀",

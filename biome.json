@@ -10,14 +10,7 @@
 			"style": {
 				"noNonNullAssertion": "off" 
 			}
-		},
-		"ignore": [
-			"src/v0/**",
-			"src/**/*graphql*.ts",
-			"src/v1/**/index.ts",
-			"src/v1/**/authenticate.ts",
-			"src/v1/**/plugins.ts"
-		]
+		}
 	},
 	"formatter": {
 		"enabled": false
