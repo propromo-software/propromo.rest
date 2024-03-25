@@ -957,7 +957,7 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
                 }, ACCOUNT_LEVEL_OPTIONS("organization"))
 
                 /**
-                 * Request organization info.
+                 * Request essential organization info.
                  */
                 .get('/essential', async ({ fetchParams, params: { login_name }, set }) => {
                     const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
@@ -1037,6 +1037,9 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
         .group("", (app) => app
             .use(RESOLVE_JWT)
             .group("/:login_name", (app) => app
+                /**
+                 * Request anything in the user.
+                 */
                 .post('', async ({ fetchParams, params: { login_name }, body, set }) => {
                     const response = await fetchGithubDataUsingGraphql<{ user: User }>(
                         new UserFetcher(login_name, body.scopes as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
@@ -1047,6 +1050,70 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
 
                     return response;
                 }, ACCOUNT_LEVEL_OPTIONS("user"))
+
+                /**
+                 * Request essential user info.
+                 */
+                .get('/essential', async ({ fetchParams, params: { login_name }, set }) => {
+                    const response = await fetchGithubDataUsingGraphql<{ user: User }>(
+                        new UserFetcher(login_name, [{
+                            scopeName: GITHUB_ACCOUNT_SCOPES.ESSENTIAL,
+                            pageSize: 1,
+                            continueAfter: null
+                        }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
+                        fetchParams!.auth,
+                        set,
+                        fetchParams!.auth_type!
+                    );
+
+                    return response;
+                }, {
+                    detail: {
+                        description: "Request essential infos of the user.",
+                        tags: ['github']
+                    }
+                })
+
+                /**
+                 * Request user info.
+                 */
+                .get('/info', async ({ fetchParams, params: { login_name }, set }) => {
+                    const response = await fetchGithubDataUsingGraphql<{ user: User }>(
+                        new UserFetcher(login_name, [{
+                            scopeName: GITHUB_ACCOUNT_SCOPES.INFO,
+                            pageSize: 1,
+                            continueAfter: null
+                        }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
+                        fetchParams!.auth,
+                        set,
+                        fetchParams!.auth_type!
+                    );
+
+                    return response;
+                }, {
+                    detail: {
+                        description: "Request infos of the user.",
+                        tags: ['github']
+                    }
+                })
+
+                /**
+                 * Request user packages.
+                 */
+                .get('/packages', async ({ fetchParams, params: { login_name }, query, set }) => {
+                    const response = await fetchGithubDataUsingGraphql<{ user: User }>(
+                        new UserFetcher(login_name, [{
+                            scopeName: GITHUB_ACCOUNT_SCOPES.PACKAGES,
+                            pageSize: query.pageSize ?? 1,
+                            continueAfter: query.continueAfter
+                        }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
+                        fetchParams!.auth,
+                        set,
+                        fetchParams!.auth_type!
+                    );
+
+                    return response;
+                }, ACCOUNT_LEVEL_HAVING_CHILDREN_OPTIONS("Request packages of the user. (`/packages?pageSize=1&continueAfter=abc`)"))
 
                 // --------------------------------------------------------------------------------------------------------------------------
                 /*                                                     User children.                                                      */
