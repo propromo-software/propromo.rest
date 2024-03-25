@@ -87,7 +87,7 @@ export const getAllRepositoriesInProject = (
  * @param {"user" | "organization"} login_type - The type of the login (default is "organization").
  * @return {string} The generated GraphQL query.
  */
-export const AccountScopeEntryRoot = (login_name: string, query_children: string, login_type: "user" | "organization" = "organization") => {
+export const AccountScopeEntryRoot = (login_name: string, query_children: string, login_type: "user" | "organization") => {
     const query = `{
         ${login_type}(login: "${login_name}") {
             ${query_children}
