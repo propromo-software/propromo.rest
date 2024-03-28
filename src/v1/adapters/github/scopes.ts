@@ -597,6 +597,17 @@ export class Repository {
         if (this.#name) {
             return `
                 repository(name: "${this.#name}") {
+                    ${this.#essentialBody()}
+                    ${this.#infoBody()}
+    
+                    ${this.#licenseBody()}
+                    ${this.#vulnerabilitiesBody()}
+                    ${this.#topicsBody()}
+                    ${this.#labelsBody()}
+                    ${this.#releasesBody()}
+                    ${this.#deploymentsBody()}
+                    ${this.#languagesBody()}
+
                     ${this.#milestonesBody(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number)}
                 }
             `;
@@ -612,6 +623,17 @@ export class Repository {
             }
 
             nodes {
+                ${this.#essentialBody()}
+                ${this.#infoBody()}
+
+                ${this.#licenseBody()}
+                ${this.#vulnerabilitiesBody()}
+                ${this.#topicsBody()}
+                ${this.#labelsBody()}
+                ${this.#releasesBody()}
+                ${this.#deploymentsBody()}
+                ${this.#languagesBody()}
+                
                 ${this.#milestonesBody(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number)}
             }
         }`;

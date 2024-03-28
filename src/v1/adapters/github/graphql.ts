@@ -1,5 +1,5 @@
 import { Repository } from "./scopes";
-import { GITHUB_REPOSITORY_SCOPES, GITHUB_PROJECT_SCOPES, PageSize, GRAMMATICAL_NUMBER, GITHUB_MILESTONE_ISSUE_STATES } from "./types";
+import { type GITHUB_REPOSITORY_SCOPES, GITHUB_PROJECT_SCOPES, type PageSize, GRAMMATICAL_NUMBER, GITHUB_MILESTONE_ISSUE_STATES } from "./types";
 const DEV_MODE = process.env.DEV_MODE! === "true";
 
 export const GITHUB_QUOTA = `{
