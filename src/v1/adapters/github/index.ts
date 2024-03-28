@@ -732,7 +732,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                              * Milestones Issues.
                              */
                             .get('/issues', async ({ fetchParams, params: { login_name, project_id_or_name }, query, set }) => {
-                                const issues_states = parseScopes<GITHUB_MILESTONE_ISSUE_STATES>(query.issues_states ?? GITHUB_MILESTONE_ISSUE_STATES.OPEN, GITHUB_MILESTONE_ISSUE_STATES, set, [GITHUB_MILESTONE_ISSUE_STATES.OPEN])
+                                const issues_states = parseScopes<GITHUB_MILESTONE_ISSUE_STATES>(query.issues_states, GITHUB_MILESTONE_ISSUE_STATES, set)
 
                                 const response = await fetchGithubDataUsingGraphql<{ project: ProjectV2 }>(
                                     AccountScopeEntryRoot(
@@ -835,7 +835,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             }
                                         })
                                         .get('/issues', async ({ fetchParams, params: { login_name, project_id_or_name, milestone_id }, query, set }) => {
-                                            const issues_states = parseScopes<GITHUB_MILESTONE_ISSUE_STATES>(query.issues_states ?? GITHUB_MILESTONE_ISSUE_STATES.OPEN, GITHUB_MILESTONE_ISSUE_STATES, set, [GITHUB_MILESTONE_ISSUE_STATES.OPEN])
+                                            const issues_states = parseScopes<GITHUB_MILESTONE_ISSUE_STATES>(query.issues_states, GITHUB_MILESTONE_ISSUE_STATES, set)
 
                                             const response = await fetchGithubDataUsingGraphql<{ project: ProjectV2 }>(
                                                 AccountScopeEntryRoot(

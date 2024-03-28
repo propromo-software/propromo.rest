@@ -538,12 +538,13 @@ export class Repository {
     }
 
     getQuery(issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null, milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null) {
+        const final_issue_states = issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN, GITHUB_MILESTONE_ISSUE_STATES.CLOSED];
         let query = this.#getInfoQuery();
 
         if (this.#doFetchMilestones || this.#doFetchIssues) {
             if (this.#log) console.info("fetching milestones and/or issues");
 
-            query = this.#getIssuesQuery(issues_states, milestones_amount, milestone_number);
+            query = this.#getIssuesQuery(final_issue_states, milestones_amount, milestone_number);
         }
 
         if (this.#log) console.info(query);

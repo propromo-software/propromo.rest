@@ -1,5 +1,5 @@
 import { Repository } from "./scopes";
-import { type GITHUB_REPOSITORY_SCOPES, GITHUB_PROJECT_SCOPES, type PageSize, GRAMMATICAL_NUMBER, GITHUB_MILESTONE_ISSUE_STATES } from "./types";
+import { type GITHUB_REPOSITORY_SCOPES, GITHUB_PROJECT_SCOPES, type PageSize, GRAMMATICAL_NUMBER, type GITHUB_MILESTONE_ISSUE_STATES } from "./types";
 const DEV_MODE = process.env.DEV_MODE! === "true";
 
 export const GITHUB_QUOTA = `{
@@ -73,7 +73,7 @@ export const getAllRepositoriesInProject = (
     return Project(
         project_name,
         project_scopes,
-        repository.getQuery(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number)
+        repository.getQuery(issues_states, milestones_amount, milestone_number)
     );
 }
 
