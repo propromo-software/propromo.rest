@@ -10,7 +10,8 @@ import type { Context } from "elysia";
  * @param {string} [errorMessage] - The error message to throw if the scope values are invalid.
  * @return {T[]} An array of valid enum values.
  */
-export function parseScopes<T>(inputScopes: string, validationEnum: object, set: Context["set"], fallbackScopes: string[], errorMessage?: string): T[] {
+export function parseScopes<T>(inputScopes: string | undefined, validationEnum: object, set: Context["set"], fallbackScopes: string[] = ["open", "closed"], errorMessage?: string): T[] {
+
     const scope_values = (inputScopes === undefined || inputScopes === "") ? fallbackScopes : inputScopes.split(',');
     const scope_values_are_of_valid_enum_type = isValidEnumArray(scope_values, Object.values(validationEnum));
 
