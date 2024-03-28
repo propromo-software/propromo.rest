@@ -73,7 +73,7 @@ export const getAllRepositoriesInProject = (
     return Project(
         project_name,
         project_scopes,
-        repository.getQuery(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number)
+        repository.getQuery(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN, GITHUB_MILESTONE_ISSUE_STATES.CLOSED], milestones_amount, milestone_number)
     );
 }
 
