@@ -21,4 +21,15 @@ jobs:
         run: bun install
 
       - name: Run tests
+        env:
+          DEV_MODE: true
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          HEROKU_API_TOKEN: ${{ secrets.HEROKU_API_TOKEN }}
+          DEV_ACCESS_PASSPHRASE: ${{ secrets.DEV_ACCESS_PASSPHRASE }}
+
+          GITHUB_APP_CLIENT_ID: ${{ secrets.GH_APP_CLIENT_ID }}
+          GITHUB_APP_CLIENT_SECRET: ${{ secrets.GH_APP_CLIENT_SECRET }}
+          GITHUB_APP_ID: ${{ secrets.GH_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          GITHUB_APP_WEBHOOK_SECRET: ${{ secrets.GH_APP_WEBHOOK_SECRET }}
         run: bun test
