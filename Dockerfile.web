@@ -10,6 +10,9 @@ COPY bun.lockb .
 
 RUN bun install --production
 
+# .env is only copied for development/testing (not available in remote repo => not copied in production), production has it's own way of setting environment variables for the application
+COPY **.env .env
+RUN [ -s .env ] || rm .env
 COPY src src
 COPY static static
 COPY tsconfig.json .
