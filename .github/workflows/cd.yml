@@ -1,5 +1,10 @@
 name: Continuous Deployment - Rest Backend Service
-on: ["push", "pull_request"]
+on:
+  workflow_run:
+    workflows: ["Continuous Integration - Rest Backend Service"]
+    types:
+      - completed
+permissions: write-all
 
 jobs:
   cd:

@@ -8,7 +8,7 @@ import { /* type InferContext, */ logger } from '@bogeychan/elysia-logger'; // h
 import { API_FORWARD_ROUTES, CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { v1 } from "./v1";
 
-const app = new Elysia()
+export const app = new Elysia()
   .use(serverTiming())
   .use(logger({ autoLogging: true }))
   .use(staticPlugin({ // serve static files from the "static" directory
