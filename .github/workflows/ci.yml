@@ -32,4 +32,11 @@ jobs:
           GITHUB_APP_ID: ${{ secrets.GH_APP_ID }}
           GITHUB_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
           GITHUB_APP_WEBHOOK_SECRET: ${{ secrets.GH_APP_WEBHOOK_SECRET }}
-        run: bun test
+        run: bun test --coverage
+
+      # TODO: waiting for bun to support coverage report formats
+      #- name: Update Coverage Badge
+      #  # GitHub actions: default branch variable
+      #  # https://stackoverflow.com/questions/64781462/github-actions-default-branch-variable
+      #  if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      #  uses: we-cli/coverage-badge-action@main

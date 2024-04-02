@@ -20,6 +20,8 @@ Open <http://localhost:3000/> with your browser to see the result.
 
 ### Testing
 
+[![cov](https://propromo-software.github.io/propromo.rest/badges/coverage.svg)](https://github.com/propromo-software/propromo.rest/actions/workflows/ci.yml)
+
 ```bash
 bun test
 ```
