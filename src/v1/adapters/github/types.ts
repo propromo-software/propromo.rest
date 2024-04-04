@@ -6,13 +6,6 @@ import type {
 } from "@octokit/types";
 import { Octokit } from "octokit";
 
-/* AUTHENTICATION */
-
-export interface TokenVerifier {
-    // biome-ignore lint/suspicious/noExplicitAny:
-    verify(bearer: string | undefined): Promise<any>;
-}
-
 /* REST/GRAPHQL */
 
 // type UnionOfKeys<T> = keyof T extends infer U ? U : never;

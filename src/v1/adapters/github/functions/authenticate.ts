@@ -2,11 +2,12 @@ import { type Context, Elysia, t } from "elysia";
 import jwt from '@elysiajs/jwt';
 import { octokitApp } from "./app";
 import { Octokit } from "octokit";
-import { GITHUB_AUTHENTICATION_STRATEGY_OPTIONS, type TokenVerifier } from "../types";
+import { GITHUB_AUTHENTICATION_STRATEGY_OPTIONS } from "../types";
 import bearer from '@elysiajs/bearer';
 import { fetchGithubDataUsingGraphql } from "./fetch";
 import type { RateLimit } from "@octokit/graphql-schema";
 import { GITHUB_QUOTA } from "../graphql";
+import { maybeStringToNumber } from "./parse";
 
 /* JWT */
 
@@ -18,31 +19,72 @@ export const GITHUB_JWT = new Elysia()
             name: GITHUB_JWT_REALM,
             secret: process.env.JWT_SECRET!,
             alg: "HS256", /* alt: RS256 */
-            iss: "propromo"
+            iss: "propromo",
+            schema: t.Object({
+                auth_type: t.Enum(GITHUB_AUTHENTICATION_STRATEGY_OPTIONS),
+                auth: t.Union([t.String(), t.Numeric()]) // token or installation_id
+            })
         })
     )
 
 export const RESOLVE_JWT = new Elysia()
     .use(GITHUB_JWT)
-    .resolve({ as: 'scoped' }, async ({ propromoRestAdaptersGithub, headers: { authorization }, set }) => {
-        return {
-            fetchParams: await resolveJwtPayload<typeof propromoRestAdaptersGithub>(propromoRestAdaptersGithub, authorization, set)
+    .resolve({ as: "scoped" }, async ({ propromoRestAdaptersGithub, headers: { authorization }, set }) => {
+        if (!authorization) { // Authorization: Bearer <token>
+            set.status = 400;
+            set.headers[
+                'WWW-Authenticate'
+            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="bearer_token_missing"`;
         }
-    })
-    .onBeforeHandle({ as: 'scoped' }, ({ fetchParams }) => {
-        if (!fetchParams) return "Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.";
+    
+        const bearer = authorization?.split(' ')[1];
+        if (!bearer || bearer.trim().length === 0) {
+            set.status = 400;
+            set.headers[
+                'WWW-Authenticate'
+            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="bearer_token_missing"`;
+        }
+
+        const jwt = await propromoRestAdaptersGithub.verify(bearer);
+        if (!jwt) {
+            set.status = 401;
+            set.headers[
+                'WWW-Authenticate'
+            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="bearer_token_invalid"`;
+
+            throw Error('Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.');
+        }
+
+        if (!bearer) {
+            set.status = 400
+            set.headers[
+                'WWW-Authenticate'
+            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`
+
+            throw Error('Token is missing. Create one at https://github.com/settings/tokens.');
+        }
+
+        const tokenIsValid = await checkIfTokenIsValid(bearer, set);
+        if (!tokenIsValid) {
+            set.status = 401;
+            set.headers[
+                'WWW-Authenticate'
+            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
+    
+            throw Error("Unauthorized");
+        }
+
+        return {
+            fetchParams: {
+                auth_type: jwt.auth_type,
+                auth: jwt.auth
+            }
+        };
     })
 
 /* APP AND TOKEN AUTHENTICATION */
 
-/**
- * Checks if the provided token is valid by fetching data from Github using GraphQL.
- *
- * @param {string} token - The token to check.
- * @param {Context["set"]} set - The set object from the context.
- * @return {Promise<boolean | string>} Returns true if the token is valid, otherwise returns an error message.
- */
-async function checkIfTokenIsValid(token: string, set: Context["set"]): Promise<boolean | string> {
+async function checkIfTokenIsValid(token: string | number, set: Context["set"]) {
     const response = await fetchGithubDataUsingGraphql<{ rateLimit: RateLimit } | undefined | null>(
         GITHUB_QUOTA,
         token,
@@ -55,7 +97,7 @@ async function checkIfTokenIsValid(token: string, set: Context["set"]): Promise<
             'WWW-Authenticate'
         ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
 
-        return `The provided token is invalid or has expired. Please try another token. Perhaps you chose the wrong provider? [${response?.error}]` ?? '';
+        throw Error(`The provided token is invalid or has expired. Please try another token. Perhaps you chose the wrong provider? [${response?.error}]` ?? '');
     }
 
     return true;
@@ -64,52 +106,38 @@ async function checkIfTokenIsValid(token: string, set: Context["set"]): Promise<
 export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
     .use(bearer())
     .use(GITHUB_JWT)
-    .post('/app', async ({ set, body, propromoRestAdaptersGithub }) => {
-        const code = body?.code
-            ? body.code
-            : null;
-        const installation_id = body?.installation_id
-            ? body.installation_id
-            : null;
-        const setup_action = body?.setup_action
-            ? body.setup_action
-            : null; // type=install
+    .post('/app', async ({ body, propromoRestAdaptersGithub }) => {
+        const auth = maybeStringToNumber(body?.installation_id!); // bearer is checked beforeHandle
 
-        if (!code || !installation_id || !setup_action || setup_action !== 'install') {
-            set.status = 400;
-            set.headers[
-                'WWW-Authenticate'
-            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`;
-
-            return 'Invalid request';
-        }
-
-        const bearerTokenPromise = propromoRestAdaptersGithub.sign({
-            code: code,
-            installation_id: installation_id,
-            setup_action: setup_action,
+        const bearerToken = await propromoRestAdaptersGithub.sign({
+            auth_type: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP,
+            auth,
             iat: Math.floor(Date.now() / 1000) - 60,
             /* exp: Math.floor(Date.now() / 1000) + (10 * 60) */
         })
-        const bearerToken = await bearerTokenPromise;
-
-        if (!bearerToken) {
-            set.status = 401;
-            set.headers[
-                'WWW-Authenticate'
-            ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
-
-            return 'Unauthorized';
-        }
-
-        const tokenIsValid = await checkIfTokenIsValid(bearerToken, set);
-
-        if (typeof tokenIsValid === 'string') {
-            return tokenIsValid;
-        }
 
         return bearerToken;
     }, {
+        async beforeHandle({ body, set }) {
+            if (!body.code || !body.installation_id || !body.setup_action || body.setup_action !== 'install') {
+                set.status = 400;
+                set.headers[
+                    'WWW-Authenticate'
+                ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`;
+    
+                throw Error('App installation is missing. Install it at https://github.com/apps/propromo-software/installations/new.');
+            }
+
+            const tokenIsValid = await checkIfTokenIsValid(body.installation_id, set);
+            if (!tokenIsValid) {
+                set.status = 401;
+                set.headers[
+                    'WWW-Authenticate'
+                ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
+        
+                throw Error("Unauthorized");
+            }
+        },
         body: t.Object({
             code: t.Optional(
                 t.String({
@@ -128,113 +156,41 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             tags: ['github', 'authentication']
         }
     })
-    .post('/token', async ({ bearer }) => bearer, {
-        async beforeHandle({ propromoRestAdaptersGithub, bearer, set }) {
-            const token = bearer;
+    .post('/token', async ({ propromoRestAdaptersGithub, bearer }) => {
+        const auth = maybeStringToNumber(bearer!); // bearer is checked beforeHandle
 
-            if (!token) {
+        const bearerToken = await propromoRestAdaptersGithub.sign({
+            auth_type: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN,
+            auth
+        })
+    
+        return bearerToken;
+    }, {
+        async beforeHandle({ bearer, set }) {
+            if (!bearer) {
                 set.status = 400
                 set.headers[
                     'WWW-Authenticate'
                 ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`
 
-                return 'Invalid request'
+                throw Error('Token is missing. Create one at https://github.com/settings/tokens.')
             }
 
-            const bearerTokenPromise = propromoRestAdaptersGithub.sign({
-                token: token
-            })
-            const bearerToken = await bearerTokenPromise;
-
-            if (!bearerToken) {
+            const tokenIsValid = await checkIfTokenIsValid(bearer, set);
+            if (!tokenIsValid) {
                 set.status = 401;
                 set.headers[
                     'WWW-Authenticate'
                 ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
-
-                return 'Unauthorized';
+        
+                throw Error("Unauthorized");
             }
-
-            const tokenIsValid = await checkIfTokenIsValid(token, set);
-
-            if (typeof tokenIsValid === 'string') {
-                return tokenIsValid;
-            }
-
-            return bearerToken;
         },
         detail: {
             description: "Authenticate using a GitHub PAT.",
             tags: ['github', 'authentication']
         }
-    });
-
-/**
- * Retrieves the payload from the given token verifier and sets the status and headers if the payload is invalid. Returns the payload if it is valid, or 'Unauthorized' if it is invalid.
- */
-export async function getJwtPayload<T extends TokenVerifier>(realm: T, bearer: string | undefined, set: Context["set"]) {
-    const payloadPromise = realm.verify(bearer);
-    const payload = await payloadPromise;
-
-    if (!payload) {
-        set.status = 401;
-        set.headers[
-            'WWW-Authenticate'
-        ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_token"`;
-
-        return 'Unauthorized'
-    }
-
-    return {
-        payload: payload
-    }
-}
-
-/**
- * Resolves the JWT payload for the given token verifier
- */
-export async function resolveJwtPayload<T extends TokenVerifier>(realm: T, authorization: string | undefined, set: Context["set"]) {
-    if (!authorization) {
-        set.status = 400;
-        set.headers[
-            'WWW-Authenticate'
-        ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`;
-
-        /* return {
-            payload: null
-        } */
-    }
-
-    const bearer = authorization?.split(' ')[1]; // Authorization: Bearer <token>
-    const jwt = await getJwtPayload<typeof realm>(realm, bearer, set);
-    /* if (typeof jwt === 'string') {
-        return null;
-    } */
-
-    return {
-        ...getFetchParams(jwt)
-    }
-}
-
-/**
- * Generate fetch parameters based on the JWT payload.
- */
-
-// biome-ignore lint/suspicious/noExplicitAny:
-function getFetchParams(jwt: string | { payload: any; }) {
-    // @ts-ignore
-    const auth_type = jwt?.payload?.token ? GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN : GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP;
-    // @ts-ignore
-    const installation_id: number = jwt?.payload?.installation_id;
-    // @ts-ignore
-    const token: string = jwt?.payload?.token;
-    const auth = auth_type === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP && installation_id ? installation_id : token;
-
-    return {
-        auth_type,
-        auth
-    };
-}
+    })
 
 /* APP */
 

@@ -158,9 +158,9 @@ const FETCH_PROJECTS_FROM_ORGANIZATION = new Elysia({ prefix: '' })
                 pageSize: query.pageSize ?? 1,
                 continueAfter: query.continueAfter
             }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-            fetchParams!.auth,
+            fetchParams.auth,
             set,
-            fetchParams!.auth_type!
+            fetchParams.auth_type
         );
 
         return response;
@@ -179,9 +179,9 @@ const FETCH_PROJECTS_FROM_USER = new Elysia({ prefix: '' })
                 pageSize: query.pageSize ?? 1,
                 continueAfter: query.continueAfter
             }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-            fetchParams!.auth,
+            fetchParams.auth,
             set,
-            fetchParams!.auth_type!
+            fetchParams.auth_type
         );
 
         return response;
@@ -222,9 +222,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                 ),
                                 login_type
                             ),
-                            fetchParams!.auth,
+                            fetchParams.auth,
                             set,
-                            fetchParams!.auth_type!
+                            fetchParams.auth_type
                         );
 
                         return response;
@@ -259,9 +259,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                 ),
                                 login_type
                             ),
-                            fetchParams!.auth,
+                            fetchParams.auth,
                             set,
-                            fetchParams!.auth_type!
+                            fetchParams.auth_type
                         );
 
                         return response;
@@ -288,9 +288,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                     ),
                                     login_type
                                 ),
-                                fetchParams!.auth,
+                                fetchParams.auth,
                                 set,
-                                fetchParams!.auth_type!
+                                fetchParams.auth_type
                             );
 
                             return response;
@@ -332,9 +332,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -359,9 +359,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -386,9 +386,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -413,9 +413,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -462,9 +462,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -496,9 +496,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -530,9 +530,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -564,9 +564,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -598,9 +598,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -632,9 +632,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -666,9 +666,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                             ),
                                             login_type
                                         ),
-                                        fetchParams!.auth,
+                                        fetchParams.auth,
                                         set,
-                                        fetchParams!.auth_type!
+                                        fetchParams.auth_type
                                     );
 
                                     return response;
@@ -709,9 +709,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                         ),
                                         login_type
                                     ),
-                                    fetchParams!.auth,
+                                    fetchParams.auth,
                                     set,
-                                    fetchParams!.auth_type!
+                                    fetchParams.auth_type
                                 );
 
                                 return response;
@@ -761,9 +761,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                         ),
                                         login_type
                                     ),
-                                    fetchParams!.auth,
+                                    fetchParams.auth,
                                     set,
-                                    fetchParams!.auth_type!
+                                    fetchParams.auth_type
                                 );
 
                                 return response;
@@ -821,9 +821,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                                     ),
                                                     login_type
                                                 ),
-                                                fetchParams!.auth,
+                                                fetchParams.auth,
                                                 set,
-                                                fetchParams!.auth_type!
+                                                fetchParams.auth_type
                                             );
 
                                             return response;
@@ -866,9 +866,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                                                     ),
                                                     login_type
                                                 ),
-                                                fetchParams!.auth,
+                                                fetchParams.auth,
                                                 set,
-                                                fetchParams!.auth_type!
+                                                fetchParams.auth_type
                                             );
 
                                             return response;
@@ -909,9 +909,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") => new Elys
                 }).getQuery(),
                 login_type
             ),
-            fetchParams!.auth,
+            fetchParams.auth,
             set,
-            fetchParams!.auth_type!
+            fetchParams.auth_type
         );
 
         return response;
@@ -948,9 +948,9 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
                 .post('', async ({ fetchParams, params: { login_name }, body, set }) => {
                     const response = await fetchGithubDataUsingGraphql<{ organization: Organization }>(
                         new OrganizationFetcher(login_name, body.scopes as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-                        fetchParams!.auth,
+                        fetchParams.auth,
                         set,
-                        fetchParams!.auth_type!
+                        fetchParams.auth_type
                     );
 
                     return response;
@@ -966,9 +966,9 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
                             pageSize: 1,
                             continueAfter: null
                         }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-                        fetchParams!.auth,
+                        fetchParams.auth,
                         set,
-                        fetchParams!.auth_type!
+                        fetchParams.auth_type
                     );
 
                     return response;
@@ -989,9 +989,9 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
                             pageSize: 1,
                             continueAfter: null
                         }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-                        fetchParams!.auth,
+                        fetchParams.auth,
                         set,
-                        fetchParams!.auth_type!
+                        fetchParams.auth_type
                     );
 
                     return response;
@@ -1012,9 +1012,9 @@ export const GITHUB_ORGS = new Elysia({ prefix: '/orgs' })
                             pageSize: query.pageSize ?? 1,
                             continueAfter: query.continueAfter
                         }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-                        fetchParams!.auth,
+                        fetchParams.auth,
                         set,
-                        fetchParams!.auth_type!
+                        fetchParams.auth_type
                     );
 
                     return response;
@@ -1043,9 +1043,9 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
                 .post('', async ({ fetchParams, params: { login_name }, body, set }) => {
                     const response = await fetchGithubDataUsingGraphql<{ user: User }>(
                         new UserFetcher(login_name, body.scopes as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-                        fetchParams!.auth,
+                        fetchParams.auth,
                         set,
-                        fetchParams!.auth_type!
+                        fetchParams.auth_type
                     );
 
                     return response;
@@ -1061,9 +1061,9 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
                             pageSize: 1,
                             continueAfter: null
                         }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-                        fetchParams!.auth,
+                        fetchParams.auth,
                         set,
-                        fetchParams!.auth_type!
+                        fetchParams.auth_type
                     );
 
                     return response;
@@ -1084,9 +1084,9 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
                             pageSize: 1,
                             continueAfter: null
                         }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-                        fetchParams!.auth,
+                        fetchParams.auth,
                         set,
-                        fetchParams!.auth_type!
+                        fetchParams.auth_type
                     );
 
                     return response;
@@ -1107,9 +1107,9 @@ export const GITHUB_USERS = new Elysia({ prefix: '/users' })
                             pageSize: query.pageSize ?? 1,
                             continueAfter: query.continueAfter
                         }] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
-                        fetchParams!.auth,
+                        fetchParams.auth,
                         set,
-                        fetchParams!.auth_type!
+                        fetchParams.auth_type
                     );
 
                     return response;
