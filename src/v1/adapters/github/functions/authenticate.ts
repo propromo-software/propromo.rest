@@ -8,6 +8,7 @@ import { fetchGithubDataUsingGraphql } from "./fetch";
 import type { RateLimit } from "@octokit/graphql-schema";
 import { GITHUB_QUOTA } from "../graphql";
 import { maybeStringToNumber } from "./parse";
+import { DEV_MODE } from "../../../../config";
 
 /* JWT */
 
@@ -19,19 +20,27 @@ export const GITHUB_JWT = new Elysia()
             name: GITHUB_JWT_REALM,
             secret: process.env.JWT_SECRET!,
             alg: "HS256", /* alt: RS256 */
-            iss: "propromo"/* , // not working properly (probably the auth parameter)
-            schema: t.Object({
+            iss: "propromo",
+            /* schema: t.Object({ // not working properly (probably the auth parameter)
                 auth_type: t.Enum(GITHUB_AUTHENTICATION_STRATEGY_OPTIONS),
-                auth: t.Union([t.String(), t.Numeric()]) // token or installation_id
+                auth: t.Union([t.String(), t.Number()]) // token or installation_id
             }) */
         })
     )
 
+/**
+ * Check for the presence of a token and throw an error if it is missing.
+ *
+ * @param {string | undefined} token - The token to be checked
+ * @param {Context["set"]} set - The set context
+ * @param {string} errorMessage - The error message to be thrown if the token is missing
+ * @return {string} The token as a string if it is present
+ */
 export function checkForTokenPresence(
     token: string | undefined,
     set: Context["set"],
-    errorMessage = "Token is missing. Create one at https://github.com/settings/tokens."
-) {
+    errorMessage: string = "Token is missing. Create one at https://github.com/settings/tokens."
+): string {
     if (!token || token.trim().length === 0) { // Authorization: Bearer <token>
         set.status = 400;
         set.headers[
@@ -44,7 +53,14 @@ export function checkForTokenPresence(
     return token as string;
 }
 
-export async function checkIfTokenIsValid(token: string | number, set: Context["set"]) {
+/**
+ * Check if the provided token is valid by fetching Github data using GraphQL.
+ *
+ * @param {string | number} token - The token to be checked.
+ * @param {Context["set"]} set - The context set object.
+ * @return {Promise<boolean>} Returns true if the token is valid.
+ */
+export async function checkIfTokenIsValid(token: string | number, set: Context["set"]): Promise<boolean> {
     const response = await fetchGithubDataUsingGraphql<{ rateLimit: RateLimit } | undefined | null>(
         GITHUB_QUOTA,
         token,
@@ -68,8 +84,11 @@ export const RESOLVE_JWT = new Elysia()
     .resolve({ as: "scoped" }, async ({ propromoRestAdaptersGithub, headers: { authorization }, set }) => {
         const bearer = authorization?.split(' ')[1];
         const token = checkForTokenPresence(bearer, set);
+        if (DEV_MODE) console.log('Token:', token);
 
         const jwt = await propromoRestAdaptersGithub.verify(token);
+        if (DEV_MODE) console.log(jwt)
+
         if (!jwt) {
             set.status = 401;
             set.headers[
@@ -80,11 +99,11 @@ export const RESOLVE_JWT = new Elysia()
         }
 
         const valid = await checkIfTokenIsValid(jwt.auth, set);
-        console.log('JWT:', jwt, 'Valid:', valid);
+        if (DEV_MODE) console.log('JWT:', jwt, 'Valid:', valid);
 
         return {
             fetchParams: {
-                auth_type: jwt.auth_type,
+                auth_type: jwt.auth_type as GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,
                 auth: jwt.auth
             }
         };
@@ -119,7 +138,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             }
 
             const valid = await checkIfTokenIsValid(body.installation_id, set);
-            console.log('JWT:', jwt, 'Valid:', valid);
+            if (DEV_MODE) console.log('JWT:', jwt, 'Valid:', valid);
         },
         body: t.Object({
             code: t.Optional(
@@ -154,7 +173,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
         async beforeHandle({ bearer, set }) {
             const token = checkForTokenPresence(bearer, set);
             const valid = await checkIfTokenIsValid(token, set);
-            console.log('JWT:', jwt, 'Valid:', valid);
+            if (DEV_MODE) console.log('JWT:', jwt, 'Valid:', valid);
         },
         detail: {
             description: "Authenticate using a GitHub PAT.",

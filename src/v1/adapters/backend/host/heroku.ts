@@ -22,7 +22,14 @@ export abstract class Heroku { // only possible with their cli-tool (see https:/
     return response;
   }
 
-  static async run(command: string, app = "propromo"): Promise<string> {
+  /**
+   * Execute Herokus run command with the given command and app name on a remote dyno.
+   *
+   * @param {string} command - the command to be executed
+   * @param {string} app - the app name (default is "propromo")
+   * @return {Promise<string>} a Promise that resolves with a string
+   */
+  static async run(command: string, app: string = "propromo"): Promise<string> {
     return new Promise((resolve, reject) => {
       const herokuCommand = `heroku run ${command} --app ${app}`;
       const herokuRun = spawn('bash', ['-c', `HEROKU_API_KEY='${process.env.HEROKU_API_TOKEN}' ${herokuCommand}`]);

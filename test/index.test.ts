@@ -50,7 +50,7 @@ describe('Propromo Rest-Microservice Tests (ElysiaJS Tests)', () => {
             }
 
             const result = await validator(options); // returns "The document validates according to the specified schema(s)." :skull:
-            console.log(result);
+            if (DEV_MODE) console.log(result);
 
             expect(result).toBeString();
         } catch (error) {
