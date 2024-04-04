@@ -2,14 +2,14 @@ import { Elysia } from "elysia"; // https://elysiajs.com/introduction.html
 import { cors } from '@elysiajs/cors'; // https://elysiajs.com/plugins/cors.html
 import { staticPlugin } from '@elysiajs/static'; // https://github.com/elysiajs/elysia-static
 import { html } from "@elysiajs/html"; // https://elysiajs.com/plugins/html.html
-import { serverTiming } from '@elysiajs/server-timing'; // https://elysiajs.com/plugins/server-timing
+/* import { serverTiming } from '@elysiajs/server-timing'; */ // https://elysiajs.com/plugins/server-timing
 import { /* type InferContext, */ logger } from '@bogeychan/elysia-logger'; // https://www.npmjs.com/package/@bogeychan/elysia-logger
 
 import { API_FORWARD_ROUTES, CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { v1 } from "./v1";
 
 export const app = new Elysia()
-  .use(serverTiming())
+  /* .use(serverTiming()) */ // THIS MOTHERFUCKER MADE ME RETHINK MY WHOLE EXISTENCE, BLOCKED EVERYTHING LEADING TO NETWORK_ERRORs AND ME LOOSING MYSELF TRYING TO FIGURE OUT WHAT I DID WRONG TO CAUSE NETWORK_ERRORs, HOLY SHIT I AM SO MAD
   .use(logger({ autoLogging: true }))
   .use(staticPlugin({ // serve static files from the "static" directory
     assets: "static",
