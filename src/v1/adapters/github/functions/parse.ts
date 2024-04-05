@@ -1,4 +1,5 @@
 import type { Context } from "elysia";
+import { MicroserviceError } from "../error";
 
 /**
  * Parses the input scopes and returns an array of valid enum values.
@@ -17,7 +18,9 @@ export function parseScopes<T>(inputScopes: string | undefined, validationEnum: 
 
     if (!scope_values_are_of_valid_enum_type) {
         set.status = 400;
-        throw Error(errorMessage ?? 'Invalid scope values');
+
+        const message = errorMessage ?? 'Invalid scope values';
+        throw new MicroserviceError({ error: message, code: 400 });
     }
 
     return scope_values as T[];

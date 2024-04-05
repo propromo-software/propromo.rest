@@ -10,6 +10,7 @@ import {
 import { GITHUB_API_HEADERS } from "../globals";
 import { getOctokitObject } from "./authenticate";
 import type { OctokitResponse } from "@octokit/types";
+import { MicroserviceError } from "../error";
 
 /**
  * Fetches the rate limit using the provided authentication and context set.
@@ -21,11 +22,9 @@ import type { OctokitResponse } from "@octokit/types";
 export async function fetchRateLimit(auth: string | number, set: Context["set"]): Promise<RestResponse<GetRateLimit>> {
     const octokit = await getOctokitObject(
         GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN,
-        auth
+        auth,
+        set
     );
-
-    if (!octokit)
-        return { success: false, error: "Invalid authentication strategy" };
 
     return tryFetch<GetRateLimit>(
         () => octokit.rest.rateLimit.get(),
@@ -44,9 +43,16 @@ export async function fetchRateLimit(auth: string | number, set: Context["set"])
  */
 // biome-ignore lint/suspicious/noExplicitAny:
 export async function fetchGithubDataUsingRest(path: string, auth: string | number | undefined | null, set: Context["set"], authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null): Promise<RestResponse<OctokitResponse<any, number>>> {
-    if (auth === undefined) return { success: false, error: "No authentication token provided" };
-    const octokit = await getOctokitObject(authStrategy, auth);
-    if (!octokit) return { success: false, error: "Invalid authentication strategy" };
+    if (auth === undefined) {
+        set.status = 400;
+        throw new MicroserviceError({ error: "No authentication token provided", code: 400 });
+    }
+
+    const octokit = await getOctokitObject(authStrategy, auth, set);
+    if (!octokit) {
+        set.status = 400;
+        throw new MicroserviceError({ error: "Invalid authentication strategy", code: 400 });
+    }
 
     // biome-ignore lint/suspicious/noExplicitAny:
     return tryFetch<OctokitResponse<any, number>>(
@@ -65,9 +71,11 @@ export async function fetchGithubDataUsingRest(path: string, auth: string | numb
  * @return {Promise<GraphqlResponse<T>>} a promise that resolves to a GraphQL response
  */
 export async function fetchGithubDataUsingGraphql<T>(graphqlInput: string, auth: string | number | undefined | null, set: Context["set"], authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null): Promise<GraphqlResponse<T>> {
-    if (auth === undefined) return { success: false, error: "No authentication token provided" };
-    const octokit = await getOctokitObject(authStrategy, auth);
-    if (!octokit) return { success: false, error: "Invalid authentication strategy" };
+    if (auth === undefined) {
+        set.status = 400;
+        throw new MicroserviceError({ error: "No authentication token provided", code: 400 });
+    }
+    const octokit = await getOctokitObject(authStrategy, auth, set);
 
     return tryFetch<T>(
         () => octokit.graphql<T>(graphqlInput, {
@@ -102,23 +110,23 @@ const tryFetch = async <T>(
     } catch (error: any) {
         if (error instanceof GraphqlResponseError) {
             set.status = error.errors?.[0].type === GraphqlResponseErrorCode.NOT_FOUND ? 404 : 500;
-            return {
-                success: false,
-                error: error.message,
-                cause: error.cause,
-                path: error.errors?.[0].path,
-                type: error.errors?.[0].type,
-            };
+
+            throw new MicroserviceError({
+                error: error.message, code: set.status, info: {
+                    cause: error.cause,
+                    path: error.errors?.[0].path,
+                    type: error.errors?.[0].type
+            }});
         } if (
             error instanceof InternalServerError ||
             error instanceof ParseError ||
             error instanceof NotFoundError
         ) {
             set.status = error.status;
-            return { success: false, error: error.status };
+            throw new MicroserviceError({ error: "Something went horrible wrong.", code: error.status });
         }
 
         set.status = error?.status ?? 500;
-        return { success: false, error: errorMessage };
+        throw new MicroserviceError({ error: errorMessage, code: error.status });
     }
 };

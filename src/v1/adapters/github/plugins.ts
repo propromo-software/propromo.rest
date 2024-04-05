@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
-import { GITHUB_JWT, GITHUB_JWT_REALM } from "./functions/authenticate";
+import { GITHUB_JWT, checkForTokenPresence, checkIfTokenIsValid } from "./functions/authenticate";
 import bearer from '@elysiajs/bearer';
+import { DEV_MODE } from "../../../config";
 
 /* GUARDED ENDPOINTS */
 
@@ -19,14 +20,8 @@ export const guardEndpoints = (endpoints: Elysia) => new Elysia({
     .guard(
         {
             async beforeHandle({ bearer, set }) {
-                if (!bearer) {
-                    set.status = 400
-                    set.headers[
-                        'WWW-Authenticate'
-                    ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`
-
-                    return 'Unauthorized'
-                }
+                const token = checkForTokenPresence(bearer, set);
+                if (DEV_MODE) console.log('JWT:', token);
             }
         },
         (app) => app

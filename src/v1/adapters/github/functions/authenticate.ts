@@ -9,6 +9,7 @@ import type { RateLimit } from "@octokit/graphql-schema";
 import { GITHUB_QUOTA } from "../graphql";
 import { maybeStringToNumber } from "./parse";
 import { DEV_MODE } from "../../../../config";
+import { MicroserviceError } from "../error";
 
 /* JWT */
 
@@ -47,7 +48,7 @@ export function checkForTokenPresence(
             'WWW-Authenticate'
         ] = `Bearer realm='${GITHUB_JWT_REALM}', error="bearer_token_missing"`;
 
-        throw Error(errorMessage);
+        throw new MicroserviceError({ error: errorMessage, code: 400 });
     }
 
     return token as string;
@@ -73,7 +74,7 @@ export async function checkIfTokenIsValid(token: string | number, set: Context["
             'WWW-Authenticate'
         ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_bearer_token"`;
 
-        throw Error(`The provided token is invalid or has expired. Please try another token. Perhaps you chose the wrong provider? [${response?.error}]` ?? '');
+        throw new MicroserviceError({ error: "The provided token is invalid or has expired. Please try another token. Perhaps you chose the wrong provider?", code: 401, info: response?.error });
     }
 
     return true;
@@ -95,10 +96,10 @@ export const RESOLVE_JWT = new Elysia()
                 'WWW-Authenticate'
             ] = `Bearer realm='${GITHUB_JWT_REALM}', error="bearer_token_invalid"`;
 
-            throw Error('Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.');
+            throw new MicroserviceError({ error: 'Unauthorized. Authentication token is missing or invalid. Please provide a valid token. Tokens can be obtained from the `/auth/app|token` endpoints.', code: 401 });
         }
 
-        const valid = await checkIfTokenIsValid(jwt.auth, set);
+        const valid = await checkIfTokenIsValid(jwt.auth, set); // check again, just to be sure (guardEndpoints-plugin)
         if (DEV_MODE) console.log('JWT:', jwt, 'Valid:', valid);
 
         return {
@@ -134,11 +135,11 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
                     'WWW-Authenticate'
                 ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`;
     
-                throw Error('App installation is missing. Install it at https://github.com/apps/propromo-software/installations/new.');
+                throw new MicroserviceError({ error: 'App installation is missing. Install it at https://github.com/apps/propromo-software/installations/new.', code: 400 });
             }
 
             const valid = await checkIfTokenIsValid(body.installation_id, set);
-            if (DEV_MODE) console.log('JWT:', jwt, 'Valid:', valid);
+            if (DEV_MODE) console.log('JWT:', body.installation_id, 'Valid:', valid);
         },
         body: t.Object({
             code: t.Optional(
@@ -173,7 +174,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
         async beforeHandle({ bearer, set }) {
             const token = checkForTokenPresence(bearer, set);
             const valid = await checkIfTokenIsValid(token, set);
-            if (DEV_MODE) console.log('JWT:', jwt, 'Valid:', valid);
+            if (DEV_MODE) console.log('JWT:', token, 'Valid:', valid);
         },
         detail: {
             description: "Authenticate using a GitHub PAT.",
@@ -187,16 +188,13 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
  * Generates an Octokit object based on the provided authentication strategy and credentials.
  * @documentation https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#using-octokitjs-to-authenticate-with-an-installation-id
  */
-export async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null, auth: string | number | null): Promise<Octokit | null> {
-    let octokitObject = null;
-
-    if (typeof auth === "string" && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN)) {
-        octokitObject = new Octokit({ auth });
+export async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null, auth: string | number | null, set: Context["set"]) {
+    if (typeof auth === "string" && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN)) {        
+        return new Octokit({ auth });
     } else if (authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP) {
-        octokitObject = await octokitApp.getInstallationOctokit(auth as number); // get Installation by installationId
-    } else {
-        return null;
+        return await octokitApp.getInstallationOctokit(auth as number); // get Installation by installationId
     }
 
-    return octokitObject;
+    set.status = 400;
+    throw new MicroserviceError({ error: "Invalid authentication strategy", code: 400 });
 }
