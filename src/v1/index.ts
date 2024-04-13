@@ -35,5 +35,17 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
                 { name: 'authentication', description: 'Authenticate here first, to send requests to protected endpoints.' },
                 { name: 'backend', description: 'Interact with the production environment. Accessible with a developer passphrase.' }
             ]
+        },
+        scalarConfig: {
+            metaData: {
+                ogImage: {
+                    url: 'http://localhost:3000/favicon.png',
+                    secureUrl: 'https://rest-microservice.onrender.com/favicon.png',
+                    type: "image/png",
+                    width: 512,
+                    height: 512,
+                    alt: "favicon"
+                }
+            }
         }
     }))
