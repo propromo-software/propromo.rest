@@ -1,0 +1,72 @@
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: propromo-rest-secret
+#type: Opaque
+#stringData:
+#  SECRET_ENV_VARIABLE: secretValue
+#--- # the application container
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: propromo-rest
+  namespace: student-j-froeller
+spec:
+  replicas: 1 # ReplicaSet: kubectl scale deployment propromo-rest --replicas=1
+  selector:
+    matchLabels:
+      app: propromo-rest
+  template:
+    metadata:
+      labels:
+        app: propromo-rest
+    spec:
+      containers:
+        - name: propromo-rest
+          image: registry.cloud.htl-leonding.ac.at/j.froeller/rest-microservice:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: propromo-rest-secret # kubectl create secret generic propromo-rest-secret --from-env-file=.env doesn't support multiline environment variable values :)
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+--- # exposes the application
+apiVersion: v1
+kind: Service
+metadata:
+  name: propromo-rest-service
+  namespace: student-j-froeller
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: propromo-rest
+--- # controller that looks for services and exposes the services to the internet
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: propromo-rest-ingress
+  namespace: student-j-froeller
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+    - host: student.cloud.htl-leonding.ac.at
+      http:
+        paths:
+          - path: /j.froeller/propromo-rest(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: propromo-rest-service
+                port:
+                  number: 80
