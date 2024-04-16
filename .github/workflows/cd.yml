@@ -33,6 +33,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to Leo Cloud Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cloud.htl-leonding.ac.at
+          username: ${{ secrets.LEOCLOUD_EMAIL }}
+          password: ${{ secrets.LEOCLOUD_PASSWORD }}
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -43,6 +50,7 @@ jobs:
           tags: |
             propromo/rest-microservice:latest
             ghcr.io/${{ github.repository_owner }}/propromo-rest-microservice:latest
+            registry.cloud.htl-leonding.ac.at/j.froeller/rest-microservice:latest
 
 #
 # HEROKU DEPLOYMENT
