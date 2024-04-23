@@ -987,6 +987,7 @@ export class Repository {
             `milestones(first: ${this.#milestonesPageSize}, after: ${this.#milestonesContinueAfter})`;
 
         const info_body = `
+        number
         createdAt
         closedAt
         description
