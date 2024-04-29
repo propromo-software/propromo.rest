@@ -30,8 +30,7 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
             },
             tags: [
                 { name: 'github', description: 'Used for fetching info from the Github GraphQl API.' },
-                { name: 'authentication', description: 'Authenticate here first, to send requests to protected endpoints.' },
-                { name: 'backend', description: 'Interact with the production environment. Accessible with a developer passphrase.' }
+                { name: 'authentication', description: 'Authenticate here first, to send requests to protected endpoints.' }
             ]
         },
         scalarConfig: {
