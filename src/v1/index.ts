@@ -4,10 +4,8 @@ import { swagger } from '@elysiajs/swagger';
 import { SWAGGER_PATH, ROOT_PATHS, SWAGGER_PATH_EXCLUDE, V1_PATH } from '../config';
 import { GITHUB_APP_WEBHOOKS, GITHUB_GENERAL, GITHUB_ORGS, GITHUB_USERS } from "./adapters/github";
 import { GITHUB_APP_AUTHENTICATION } from "./adapters/github/functions/authenticate";
-import { PROPROMO_BACKEND_SERVICE } from './adapters/backend/host';
 
 export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
-    .use(PROPROMO_BACKEND_SERVICE)
     .group('/github', (app) => app
         .use(GITHUB_APP_AUTHENTICATION)
         .use(GITHUB_APP_WEBHOOKS)
