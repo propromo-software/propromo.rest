@@ -1,4 +1,4 @@
-FROM oven/bun:1.0.30-debian
+FROM oven/bun:1.1.6-debian
 
 # Needed for the node:child_process module, TODO: maybe replace it with a bun specific module in the future
 RUN apt-get update && apt-get install -y build-essential
@@ -9,6 +9,13 @@ COPY package.json .
 COPY bun.lockb .
 
 RUN bun install --production
+
+# heroku cli
+RUN curl https://cli-assets.heroku.com/install.sh | sh
+ENV PATH="${PATH}:/usr/local/bin/heroku"
+RUN echo 'export PATH="/usr/local/bin/heroku:$PATH"' >> ~/.bashrc
+RUN . ~/.bashrc
+RUN heroku --version
 
 # .env is only copied for development/testing (not available in remote repo => not copied in production), production has it's own way of setting environment variables for the application
 COPY **.env .env
