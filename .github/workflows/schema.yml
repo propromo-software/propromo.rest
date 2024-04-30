@@ -1,0 +1,40 @@
+name: Sync Database Schemas
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # check every 10 minutes
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_MAIN_HOST: ${{ secrets.DATABASE_MAIN_HOST }}
+      DATABASE_NEXT_HOST: ${{ secrets.DATABASE_NEXT_HOST }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun Environment
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.1.6
+
+      - name: Install dependencies
+        run: bun install drizzle-kit@0.20.17
+
+      - name: Pull Schemas
+        run: |
+          drizzle-kit introspect:pg --config drizzle.config.main.ts
+          drizzle-kit introspect:pg --config drizzle.config.next.ts
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+
+      - name: Log Pull Request Info
+        if: ${{ steps.cpr.outputs.pull-request-number }}
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
