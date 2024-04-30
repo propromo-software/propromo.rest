@@ -8,7 +8,7 @@ import { fetchGithubDataUsingGraphql } from "./fetch";
 import type { RateLimit } from "@octokit/graphql-schema";
 import { GITHUB_QUOTA } from "../graphql";
 import { maybeStringToNumber } from "./parse";
-import { DEV_MODE } from "../../../../config";
+import { DEV_MODE, JWT_SECRET } from "../../../../environment";
 import { MicroserviceError } from "../error";
 
 /* JWT */
@@ -19,7 +19,7 @@ export const GITHUB_JWT = new Elysia()
     .use(
         jwt({
             name: GITHUB_JWT_REALM,
-            secret: process.env.JWT_SECRET!,
+            secret: JWT_SECRET,
             alg: "HS256", /* alt: RS256 */
             iss: "propromo",
             /* schema: t.Object({ // not working properly (probably the auth parameter)
@@ -40,7 +40,7 @@ export const GITHUB_JWT = new Elysia()
 export function checkForTokenPresence(
     token: string | undefined,
     set: Context["set"],
-    errorMessage: string = "Token is missing. Create one at https://github.com/settings/tokens."
+    errorMessage = "Token is missing. Create one at https://github.com/settings/tokens."
 ): string {
     if (!token || token.trim().length === 0) { // Authorization: Bearer <token>
         set.status = 400;
@@ -134,7 +134,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
                 set.headers[
                     'WWW-Authenticate'
                 ] = `Bearer realm='${GITHUB_JWT_REALM}', error="invalid_request"`;
-    
+
                 throw new MicroserviceError({ error: 'App installation is missing. Install it at https://github.com/apps/propromo-software/installations/new.', code: 400 });
             }
 
@@ -168,7 +168,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
             iat: Math.floor(Date.now() / 1000) - 60,
             /* exp: Math.floor(Date.now() / 1000) + (10 * 60) */
         })
-    
+
         return bearerToken;
     }, {
         async beforeHandle({ bearer, set }) {
@@ -189,9 +189,9 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: '/auth' })
  * @documentation https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#using-octokitjs-to-authenticate-with-an-installation-id
  */
 export async function getOctokitObject(authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null, auth: string | number | null, set: Context["set"]) {
-    if (typeof auth === "string" && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN)) {        
+    if (typeof auth === "string" && (!authStrategy || authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN)) {
         return new Octokit({ auth });
-    } else if (authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP) {
+    } if (authStrategy === GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP) {
         return await octokitApp.getInstallationOctokit(auth as number); // get Installation by installationId
     }
 

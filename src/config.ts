@@ -1,7 +1,5 @@
 import { Elysia } from "elysia";
-
-// General settings
-export const DEV_MODE = process?.env?.DEV_MODE === "true";
+import { DEV_MODE } from "./environment";
 
 // API settings
 export const V1_PATH = "v1";

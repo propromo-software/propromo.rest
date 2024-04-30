@@ -6,6 +6,7 @@ import { /* type InferContext, */ logger } from '@bogeychan/elysia-logger'; // h
 
 import { API_FORWARD_ROUTES, CORS_ORIGINS, LATEST_SWAGGER_PATH, ROOT_ROUTES, SWAGGER_PATH } from "./config";
 import { v1 } from "./v1";
+import { PORT } from "./environment";
 
 export const app = new Elysia()
   .use(logger({ autoLogging: true }))
@@ -49,7 +50,7 @@ export const app = new Elysia()
   )
   .use(v1)
 
-  .listen(process.env.PORT || 3000);
+  .listen(PORT);
 
 const currentDate = new Date();
 const millisecondsToSubtract = Bun.nanoseconds() / 1000000;

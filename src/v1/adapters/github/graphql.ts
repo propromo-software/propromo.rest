@@ -1,6 +1,6 @@
 import { Repository } from "./scopes";
 import { type GITHUB_REPOSITORY_SCOPES, GITHUB_PROJECT_SCOPES, type PageSize, GRAMMATICAL_NUMBER, type GITHUB_MILESTONE_ISSUE_STATES } from "./types";
-const DEV_MODE = process.env.DEV_MODE! === "true";
+import { DEV_MODE } from "../../../environment";
 
 export const GITHUB_QUOTA = `{
     rateLimit {

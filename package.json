@@ -16,14 +16,18 @@
     "@elysiajs/static": "^1.0.2",
     "@elysiajs/swagger": "^1.0.2",
     "@octokit/graphql-schema": "^14.47.1",
-    "@types/html-validator": "^5.0.6",
+    "drizzle-orm": "^0.30.9",
     "elysia": "^1.0.9",
-    "octokit": "^3.1.2"
+    "octokit": "^3.1.2",
+    "pg": "^8.11.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.6.1",
     "@octokit/types": "^12.6.0",
+    "@types/html-validator": "^5.0.6",
+    "@types/pg": "^8.11.5",
     "bun-types": "^1.0.33",
+    "drizzle-kit": "^0.20.17",
     "html-validator": "^6.0.1"
   },
   "module": "src/index.js",

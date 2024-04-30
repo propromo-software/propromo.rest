@@ -1,10 +1,5 @@
 import { App } from 'octokit';
-
-const GITHUB_APP_ID = process.env.GITHUB_APP_ID as string;
-const GITHUB_APP_WEBHOOK_SECRET = process.env.GITHUB_APP_WEBHOOK_SECRET as string;
-const GITHUB_APP_CLIENT_ID = process.env.GITHUB_APP_CLIENT_ID as string;
-const GITHUB_APP_CLIENT_SECRET = process.env.GITHUB_APP_CLIENT_SECRET as string;
-const GITHUB_APP_PRIVATE_KEY = Buffer.from(process.env.GITHUB_APP_PRIVATE_KEY as string, 'utf-8').toString("utf-8");
+import { GITHUB_APP_ID, GITHUB_APP_WEBHOOK_SECRET, GITHUB_APP_CLIENT_ID, GITHUB_APP_CLIENT_SECRET, GITHUB_APP_PRIVATE_KEY } from '../../../../environment';
 
 export const octokitApp = new App({ // type: "installation"
     appId: GITHUB_APP_ID,

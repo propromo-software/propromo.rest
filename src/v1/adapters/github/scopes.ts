@@ -1,5 +1,5 @@
 import { GITHUB_ACCOUNT_SCOPES, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES, GRAMMATICAL_NUMBER, type PageSize } from "./types";
-const DEV_MODE = process.env.DEV_MODE! === "true";
+import { DEV_MODE } from "../../../environment";
 
 // JS doesn't allow inheriting private (_<property/function>) properties and functions and protected ones (_<property/function>) have getters and setters per default, because they are just a convention and have to be implemented by the programmer :).
 // It is not possible to make private properties inheritable in JavaScript, as the private properties of a class are not inherited by its subclasses. This is because private properties are not part of the class's public interface, and they are not accessible from outside the class.
