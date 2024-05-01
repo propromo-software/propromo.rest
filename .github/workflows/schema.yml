@@ -16,14 +16,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      # Fuck you and your trashy lockfile bun, and fuck you for saying you are a drop-in replacement even though you are absolutely fucking not. Fuck you.
+      # https://github.com/drizzle-team/drizzle-orm/issues/2239
+      - name: Yarn setup
+        uses: DerYeger/yarn-setup-action@2.0.21
         with:
           node-version: 18
 
+      # The part of the action that would be enough, if bun wasn't such a bitch, not supporting basic stuff.
       - name: Install dependencies
-        run: |
-          npm i drizzle-kit@0.20.17 -g
-          npm ci
+        run: yarn ci
 
       - name: Pull Schemas
         run: |
