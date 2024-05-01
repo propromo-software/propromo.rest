@@ -16,13 +16,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Bun Environment
-        uses: oven-sh/setup-bun@v1
+      - uses: actions/setup-node@v4
         with:
-          bun-version: 1.1.6
+          node-version: 18
 
       - name: Install dependencies
-        run: bun install drizzle-kit@0.20.17
+        run: npm install drizzle-kit@0.20.17 -g
 
       - name: Pull Schemas
         run: |
