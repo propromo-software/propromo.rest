@@ -21,7 +21,9 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install -g drizzle-kit@0.20.17 drizzle-orm@0.30.9 pg@8.11.5
+        run: |
+          npm i drizzle-kit@0.20.17 -g
+          npm ci
 
       - name: Pull Schemas
         run: |
