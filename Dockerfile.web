@@ -1,8 +1,5 @@
 FROM oven/bun:1.1.6-debian
 
-# Needed for the node:child_process module, TODO: maybe replace it with a bun specific module in the future
-RUN apt-get update && apt-get install -y build-essential
-
 WORKDIR /app
 
 COPY package.json .
