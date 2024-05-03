@@ -21,7 +21,6 @@ jobs:
 
       - name: Pull Schemas
         run: |
-          yarn add drizzle-kit -g
           drizzle-kit introspect:pg --config drizzle.config.main.ts
           drizzle-kit introspect:pg --config drizzle.config.next.ts
 

@@ -6,12 +6,12 @@
     "dev": "bun run --watch src/index.ts",
     "lint": "biome ci .",
     "format-organize-lint": "bunx @biomejs/biome format . --write",
-    "next:push": "drizzle-kit push:pg --config drizzle.config.next.ts",
-    "next:pull": "drizzle-kit introspect:pg --config drizzle.config.next.ts",
-    "next:studio": "drizzle-kit studio --config drizzle.config.next.ts --host 127.0.0.1",
-    "main:push": "drizzle-kit push:pg --config drizzle.config.main.ts",
-    "main:pull": "drizzle-kit introspect:pg --config drizzle.config.main.ts",
-    "main:studio": "drizzle-kit studio --config drizzle.config.main.ts --host 127.0.0.1"
+    "next:push": "npx drizzle-kit push:pg --config drizzle.config.next.ts",
+    "next:pull": "npx drizzle-kit introspect:pg --config drizzle.config.next.ts",
+    "next:studio": "npx drizzle-kit studio --config drizzle.config.next.ts --host 127.0.0.1",
+    "main:push": "npx drizzle-kit push:pg --config drizzle.config.main.ts",
+    "main:pull": "npx drizzle-kit introspect:pg --config drizzle.config.main.ts",
+    "main:studio": "npx drizzle-kit studio --config drizzle.config.main.ts --host 127.0.0.1"
   },
   "dependencies": {
     "@bogeychan/elysia-logger": "^0.0.20",
