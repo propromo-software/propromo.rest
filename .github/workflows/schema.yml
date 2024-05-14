@@ -2,7 +2,7 @@ name: Sync Database Schemas
 
 on:
   schedule:
-    - cron: "*/1 * * * *" # check every 10 minutes
+    - cron: "*/10 * * * *" # check every 10 minutes
 
 jobs:
   run:
