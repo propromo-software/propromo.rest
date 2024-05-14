@@ -1,5 +1,7 @@
 import { pgTable, serial, varchar, integer, unique, bigserial, timestamp, text, bigint, index, boolean, doublePrecision, date } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
+  import { sql } from "drizzle-orm"
+
+
 
 export const migrations = pgTable("migrations", {
 	id: serial("id").primaryKey().notNull(),
@@ -20,11 +22,11 @@ export const users = pgTable("users", {
 	createdAt: timestamp("created_at", { mode: 'string' }),
 	updatedAt: timestamp("updated_at", { mode: 'string' }),
 },
-	(table) => {
-		return {
-			usersEmailUnique: unique("users_email_unique").on(table.email),
-		}
-	});
+(table) => {
+	return {
+		usersEmailUnique: unique("users_email_unique").on(table.email),
+	}
+});
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
 	email: varchar("email", { length: 255 }).primaryKey().notNull(),
@@ -41,11 +43,11 @@ export const failedJobs = pgTable("failed_jobs", {
 	exception: text("exception").notNull(),
 	failedAt: timestamp("failed_at", { mode: 'string' }).defaultNow().notNull(),
 },
-	(table) => {
-		return {
-			failedJobsUuidUnique: unique("failed_jobs_uuid_unique").on(table.uuid),
-		}
-	});
+(table) => {
+	return {
+		failedJobsUuidUnique: unique("failed_jobs_uuid_unique").on(table.uuid),
+	}
+});
 
 export const monitorUser = pgTable("monitor_user", {
 	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
@@ -70,12 +72,12 @@ export const personalAccessTokens = pgTable("personal_access_tokens", {
 	createdAt: timestamp("created_at", { mode: 'string' }),
 	updatedAt: timestamp("updated_at", { mode: 'string' }),
 },
-	(table) => {
-		return {
-			tokenableTypeTokenableIdIdx: index().on(table.tokenableType, table.tokenableId),
-			personalAccessTokensTokenUnique: unique("personal_access_tokens_token_unique").on(table.token),
-		}
-	});
+(table) => {
+	return {
+		tokenableTypeTokenableIdIdx: index().on(table.tokenableType, table.tokenableId),
+		personalAccessTokensTokenUnique: unique("personal_access_tokens_token_unique").on(table.token),
+	}
+});
 
 export const monitors = pgTable("monitors", {
 	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
