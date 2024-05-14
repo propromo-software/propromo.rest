@@ -2,7 +2,7 @@ name: Sync Database Schemas
 
 on:
   schedule:
-    - cron: "*/10 * * * *" # check every 10 minutes
+    - cron: "*/1 * * * *" # check every 10 minutes
 
 jobs:
   run:
@@ -20,12 +20,12 @@ jobs:
           node-version: 18
         
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Pull Schemas
         run: |
-          drizzle-kit introspect:pg --config drizzle.config.main.ts
-          drizzle-kit introspect:pg --config drizzle.config.next.ts
+          yarn run main:pull
+          yarn run next:pull
 
       - name: Create Pull Request
         id: cpr
