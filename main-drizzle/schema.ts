@@ -1,5 +1,19 @@
-import { pgTable, serial, varchar, integer, unique, bigserial, timestamp, text, bigint, index, boolean, doublePrecision, date } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
+import {
+	pgTable,
+	serial,
+	varchar,
+	integer,
+	unique,
+	bigserial,
+	timestamp,
+	text,
+	bigint,
+	index,
+	boolean,
+	doublePrecision,
+	date,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const migrations = pgTable("migrations", {
 	id: serial("id").primaryKey().notNull(),
@@ -7,75 +21,89 @@ export const migrations = pgTable("migrations", {
 	batch: integer("batch").notNull(),
 });
 
-export const users = pgTable("users", {
-	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
-	name: varchar("name", { length: 255 }).notNull(),
-	nickname: varchar("nickname", { length: 255 }),
-	email: varchar("email", { length: 255 }).notNull(),
-	emailVerifiedAt: timestamp("email_verified_at", { mode: 'string' }),
-	password: varchar("password", { length: 255 }).notNull(),
-	githubId: varchar("github_id", { length: 255 }),
-	authType: varchar("auth_type", { length: 255 }).notNull(),
-	rememberToken: varchar("remember_token", { length: 100 }),
-	createdAt: timestamp("created_at", { mode: 'string' }),
-	updatedAt: timestamp("updated_at", { mode: 'string' }),
-},
+export const users = pgTable(
+	"users",
+	{
+		id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
+		name: varchar("name", { length: 255 }).notNull(),
+		nickname: varchar("nickname", { length: 255 }),
+		email: varchar("email", { length: 255 }).notNull(),
+		emailVerifiedAt: timestamp("email_verified_at", { mode: "string" }),
+		password: varchar("password", { length: 255 }).notNull(),
+		githubId: varchar("github_id", { length: 255 }),
+		authType: varchar("auth_type", { length: 255 }).notNull(),
+		rememberToken: varchar("remember_token", { length: 100 }),
+		createdAt: timestamp("created_at", { mode: "string" }),
+		updatedAt: timestamp("updated_at", { mode: "string" }),
+	},
 	(table) => {
 		return {
 			usersEmailUnique: unique("users_email_unique").on(table.email),
-		}
-	});
+		};
+	},
+);
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
 	email: varchar("email", { length: 255 }).primaryKey().notNull(),
 	token: varchar("token", { length: 255 }).notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }),
+	createdAt: timestamp("created_at", { mode: "string" }),
 });
 
-export const failedJobs = pgTable("failed_jobs", {
-	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
-	uuid: varchar("uuid", { length: 255 }).notNull(),
-	connection: text("connection").notNull(),
-	queue: text("queue").notNull(),
-	payload: text("payload").notNull(),
-	exception: text("exception").notNull(),
-	failedAt: timestamp("failed_at", { mode: 'string' }).defaultNow().notNull(),
-},
+export const failedJobs = pgTable(
+	"failed_jobs",
+	{
+		id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
+		uuid: varchar("uuid", { length: 255 }).notNull(),
+		connection: text("connection").notNull(),
+		queue: text("queue").notNull(),
+		payload: text("payload").notNull(),
+		exception: text("exception").notNull(),
+		failedAt: timestamp("failed_at", { mode: "string" }).defaultNow().notNull(),
+	},
 	(table) => {
 		return {
 			failedJobsUuidUnique: unique("failed_jobs_uuid_unique").on(table.uuid),
-		}
-	});
+		};
+	},
+);
 
 export const monitorUser = pgTable("monitor_user", {
 	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }),
-	updatedAt: timestamp("updated_at", { mode: 'string' }),
+	createdAt: timestamp("created_at", { mode: "string" }),
+	updatedAt: timestamp("updated_at", { mode: "string" }),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	monitorId: bigint("monitor_id", { mode: "number" }).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	userId: bigint("user_id", { mode: "number" }).notNull(),
 });
 
-export const personalAccessTokens = pgTable("personal_access_tokens", {
-	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
-	tokenableType: varchar("tokenable_type", { length: 255 }).notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	tokenableId: bigint("tokenable_id", { mode: "number" }).notNull(),
-	name: varchar("name", { length: 255 }).notNull(),
-	token: varchar("token", { length: 64 }).notNull(),
-	abilities: text("abilities"),
-	lastUsedAt: timestamp("last_used_at", { mode: 'string' }),
-	expiresAt: timestamp("expires_at", { mode: 'string' }),
-	createdAt: timestamp("created_at", { mode: 'string' }),
-	updatedAt: timestamp("updated_at", { mode: 'string' }),
-},
+export const personalAccessTokens = pgTable(
+	"personal_access_tokens",
+	{
+		id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
+		tokenableType: varchar("tokenable_type", { length: 255 }).notNull(),
+		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+		tokenableId: bigint("tokenable_id", { mode: "number" }).notNull(),
+		name: varchar("name", { length: 255 }).notNull(),
+		token: varchar("token", { length: 64 }).notNull(),
+		abilities: text("abilities"),
+		lastUsedAt: timestamp("last_used_at", { mode: "string" }),
+		expiresAt: timestamp("expires_at", { mode: "string" }),
+		createdAt: timestamp("created_at", { mode: "string" }),
+		updatedAt: timestamp("updated_at", { mode: "string" }),
+	},
 	(table) => {
 		return {
-			tokenableTypeTokenableIdIdx: index().on(table.tokenableType, table.tokenableId),
-			personalAccessTokensTokenUnique: unique("personal_access_tokens_token_unique").on(table.token),
-		}
-	});
+			tokenableTypeTokenableIdIdx: index().on(
+				table.tokenableType,
+				table.tokenableId,
+			),
+			personalAccessTokensTokenUnique: unique(
+				"personal_access_tokens_token_unique",
+			).on(table.token),
+		};
+	},
+);
 
 export const monitors = pgTable("monitors", {
 	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
@@ -90,8 +118,8 @@ export const monitors = pgTable("monitors", {
 	shortDescription: varchar("short_description", { length: 255 }),
 	projectIdentification: integer("project_identification").notNull(),
 	monitorHash: varchar("monitor_hash", { length: 255 }).notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }),
-	updatedAt: timestamp("updated_at", { mode: 'string' }),
+	createdAt: timestamp("created_at", { mode: "string" }),
+	updatedAt: timestamp("updated_at", { mode: "string" }),
 });
 
 export const milestones = pgTable("milestones", {
@@ -100,15 +128,15 @@ export const milestones = pgTable("milestones", {
 	url: varchar("url", { length: 255 }).notNull(),
 	state: varchar("state", { length: 255 }).notNull(),
 	description: varchar("description", { length: 255 }),
-	dueOn: timestamp("due_on", { mode: 'string' }),
+	dueOn: timestamp("due_on", { mode: "string" }),
 	milestoneId: integer("milestone_id").notNull(),
 	openIssuesCount: integer("open_issues_count"),
 	closedIssuesCount: integer("closed_issues_count"),
 	progress: doublePrecision("progress").notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	repositoryId: bigint("repository_id", { mode: "number" }).notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }),
-	updatedAt: timestamp("updated_at", { mode: 'string' }),
+	createdAt: timestamp("created_at", { mode: "string" }),
+	updatedAt: timestamp("updated_at", { mode: "string" }),
 });
 
 export const tasks = pgTable("tasks", {
@@ -137,8 +165,8 @@ export const assignees = pgTable("assignees", {
 	websiteUrl: varchar("website_url", { length: 255 }),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	taskId: bigint("task_id", { mode: "number" }).notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }),
-	updatedAt: timestamp("updated_at", { mode: 'string' }),
+	createdAt: timestamp("created_at", { mode: "string" }),
+	updatedAt: timestamp("updated_at", { mode: "string" }),
 });
 
 export const labels = pgTable("labels", {
@@ -159,6 +187,6 @@ export const repositories = pgTable("repositories", {
 	name: varchar("name", { length: 255 }).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	monitorId: bigint("monitor_id", { mode: "number" }).notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }),
-	updatedAt: timestamp("updated_at", { mode: 'string' }),
+	createdAt: timestamp("created_at", { mode: "string" }),
+	updatedAt: timestamp("updated_at", { mode: "string" }),
 });
