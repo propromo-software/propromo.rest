@@ -18,6 +18,9 @@ jobs:
         uses: DerYeger/yarn-setup-action@master # not working using the latest tag...
         with:
           node-version: 18
+        
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Pull Schemas
         run: |
