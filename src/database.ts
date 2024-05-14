@@ -5,11 +5,11 @@ import * as schemaMainDB from "../main-drizzle/schema";
 import * as schemaNextDB from "../next-drizzle/schema";
 
 const mainClient = new Client({
-    connectionString: DATABASE_MAIN_HOST,
+	connectionString: DATABASE_MAIN_HOST,
 });
 
 const nextClient = new Client({
-    connectionString: DATABASE_NEXT_HOST,
+	connectionString: DATABASE_NEXT_HOST,
 });
 
 await mainClient.connect(); // .php stands for production or something idk

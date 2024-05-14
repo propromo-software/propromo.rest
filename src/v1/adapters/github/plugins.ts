@@ -1,6 +1,10 @@
 import { Elysia } from "elysia";
-import { GITHUB_JWT, checkForTokenPresence, checkIfTokenIsValid } from "./functions/authenticate";
-import bearer from '@elysiajs/bearer';
+import {
+	GITHUB_JWT,
+	checkForTokenPresence,
+	checkIfTokenIsValid,
+} from "./functions/authenticate";
+import bearer from "@elysiajs/bearer";
 import { DEV_MODE } from "../../../environment";
 
 /* GUARDED ENDPOINTS */
@@ -11,19 +15,19 @@ import { DEV_MODE } from "../../../environment";
  * @param {Elysia} endpoints - the endpoints to use as the seed for the new instance
  * @return {Elysia} the new Elysia instance with additional plugins and guards applied
  */
-export const guardEndpoints = (endpoints: Elysia) => new Elysia({
-    name: 'guardEndpoints-plugin',
-    seed: endpoints
-})
-    .use(bearer())
-    .use(GITHUB_JWT)
-    .guard(
-        {
-            async beforeHandle({ bearer, set }) {
-                const token = checkForTokenPresence(bearer, set);
-                if (DEV_MODE) console.log('JWT:', token);
-            }
-        },
-        (app) => app
-            .use(endpoints)
-    );
+export const guardEndpoints = (endpoints: Elysia) =>
+	new Elysia({
+		name: "guardEndpoints-plugin",
+		seed: endpoints,
+	})
+		.use(bearer())
+		.use(GITHUB_JWT)
+		.guard(
+			{
+				async beforeHandle({ bearer, set }) {
+					const token = checkForTokenPresence(bearer, set);
+					if (DEV_MODE) console.log("JWT:", token);
+				},
+			},
+			(app) => app.use(endpoints),
+		);

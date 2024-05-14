@@ -26,6 +26,8 @@ jobs:
         run: |
           yarn run main:pull
           yarn run next:pull
+          npx @biomejs/biome format --write ./main-drizzle
+          npx @biomejs/biome format --write ./next-drizzle
 
       - name: Create Pull Request
         id: cpr

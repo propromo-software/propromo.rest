@@ -8,9 +8,7 @@ export const API_PATHS = [V1_PATH];
 export const SWAGGER_PATH = "api";
 export const LATEST_SWAGGER_PATH = `${LATEST_MAJOR_VERSION}/${SWAGGER_PATH}`;
 export const V1_SWAGGER_PATH = `${V1_PATH}/${SWAGGER_PATH}`;
-export const SWAGGER_PATH_EXCLUDE = [
-	`/${V1_PATH}/${SWAGGER_PATH}`
-];
+export const SWAGGER_PATH_EXCLUDE = [`/${V1_PATH}/${SWAGGER_PATH}`];
 
 // Home Page URLs
 export const HOME_URLS = {

@@ -1,4 +1,10 @@
-import { GITHUB_ACCOUNT_SCOPES, GITHUB_MILESTONE_ISSUE_STATES, GITHUB_REPOSITORY_SCOPES, GRAMMATICAL_NUMBER, type PageSize } from "./types";
+import {
+	GITHUB_ACCOUNT_SCOPES,
+	GITHUB_MILESTONE_ISSUE_STATES,
+	GITHUB_REPOSITORY_SCOPES,
+	GRAMMATICAL_NUMBER,
+	type PageSize,
+} from "./types";
 import { DEV_MODE } from "../../../environment";
 
 // JS doesn't allow inheriting private (_<property/function>) properties and functions and protected ones (_<property/function>) have getters and setters per default, because they are just a convention and have to be implemented by the programmer :).
@@ -6,10 +12,15 @@ import { DEV_MODE } from "../../../environment";
 // They are private, because only the fetching functions should be visible for code completion and because ít feels illegal to expose them, because they should only be set and used within the class.
 // biome-ignore lint/complexity/noStaticOnlyClass: Prettier like that, who needs speed, am I right?
 abstract class AccountFetcher {
-    static defaultPageSize = 10;
+	static defaultPageSize = 10;
 
-    static packages(packagePageSize: number, packagesContinueAfter: string | undefined | null, count_nodes = false) { // files(first: 10)
-        return `
+	static packages(
+		packagePageSize: number,
+		packagesContinueAfter: string | undefined | null,
+		count_nodes = false,
+	) {
+		// files(first: 10)
+		return `
         packages(first: ${packagePageSize}, after: ${packagesContinueAfter}) {
             ${count_nodes ? "totalCount" : ""}
 
@@ -41,10 +52,14 @@ abstract class AccountFetcher {
             }
         }
         `;
-    }
+	}
 
-    static projects(packagePageSize: number, packagesContinueAfter: string | undefined | null, count_nodes = false) {
-        return `
+	static projects(
+		packagePageSize: number,
+		packagesContinueAfter: string | undefined | null,
+		count_nodes = false,
+	) {
+		return `
         projectsUrl
         projectsV2(first: ${packagePageSize}, after: ${packagesContinueAfter}) {
             ${count_nodes ? "totalCount" : ""}
@@ -66,93 +81,98 @@ abstract class AccountFetcher {
                 url
             }
         }
-        `
-    }
+        `;
+	}
 }
 
 export class OrganizationFetcher {
-    #name: string;
+	#name: string;
 
-    get name() {
-        return this.#name;
-    }
+	get name() {
+		return this.#name;
+	}
 
-    #doFetchEssential = true;
-    #doFetchInfo = false;
-    #doFetchPackages = false;
-    #doFetchProjects = false;
+	#doFetchEssential = true;
+	#doFetchInfo = false;
+	#doFetchPackages = false;
+	#doFetchProjects = false;
 
-    #packagePageSize: number;
-    #projectPageSize: number;
+	#packagePageSize: number;
+	#projectPageSize: number;
 
-    #packagesContinueAfter: string | undefined | null = null;
-    #projectsContinueAfter: string | undefined | null = null;
+	#packagesContinueAfter: string | undefined | null = null;
+	#projectsContinueAfter: string | undefined | null = null;
 
-    #count_nodes = false;
-    #log = false;
+	#count_nodes = false;
+	#log = false;
 
-    constructor(name: string, scopes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
-        this.#log = DEV_MODE;
-        this.#count_nodes = DEV_MODE;
+	constructor(name: string, scopes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
+		this.#log = DEV_MODE;
+		this.#count_nodes = DEV_MODE;
 
-        this.#name = name;
+		this.#name = name;
 
-        this.#packagePageSize = AccountFetcher.defaultPageSize;
-        this.#projectPageSize = AccountFetcher.defaultPageSize;
+		this.#packagePageSize = AccountFetcher.defaultPageSize;
+		this.#projectPageSize = AccountFetcher.defaultPageSize;
 
-        this.#parseScopes(scopes);
-    }
+		this.#parseScopes(scopes);
+	}
 
-    #parseScopes(pageSizes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
-        if (this.#log) console.info("parsing scopes");
+	#parseScopes(pageSizes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
+		if (this.#log) console.info("parsing scopes");
 
-        for (const ps of pageSizes) {
-            switch (ps.scopeName) {
-                case GITHUB_ACCOUNT_SCOPES.ESSENTIAL:
-                    this.#doFetchEssential = true;
-                    break;
-                case GITHUB_ACCOUNT_SCOPES.INFO:
-                    this.#doFetchInfo = true;
-                    break;
-                case GITHUB_ACCOUNT_SCOPES.PACKAGES:
-                    this.#doFetchPackages = true;
-                    this.#packagePageSize = ps.pageSize;
-                    this.#packagesContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_ACCOUNT_SCOPES.PROJECTS:
-                    this.#doFetchProjects = true;
-                    this.#projectPageSize = ps.pageSize;
-                    this.#projectsContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
+		for (const ps of pageSizes) {
+			switch (ps.scopeName) {
+				case GITHUB_ACCOUNT_SCOPES.ESSENTIAL:
+					this.#doFetchEssential = true;
+					break;
+				case GITHUB_ACCOUNT_SCOPES.INFO:
+					this.#doFetchInfo = true;
+					break;
+				case GITHUB_ACCOUNT_SCOPES.PACKAGES:
+					this.#doFetchPackages = true;
+					this.#packagePageSize = ps.pageSize;
+					this.#packagesContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_ACCOUNT_SCOPES.PROJECTS:
+					this.#doFetchProjects = true;
+					this.#projectPageSize = ps.pageSize;
+					this.#projectsContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				default:
+					break;
+			}
+		}
+	}
 
-    #validateCursor(continueAfter: string | undefined | null) {
-        if (continueAfter && continueAfter !== "null" && continueAfter !== "undefined") {
-            return `"${continueAfter}"`;
-        }
+	#validateCursor(continueAfter: string | undefined | null) {
+		if (
+			continueAfter &&
+			continueAfter !== "null" &&
+			continueAfter !== "undefined"
+		) {
+			return `"${continueAfter}"`;
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    getQuery() {
-        if (this.#log) console.info("settings: ", {
-            doFetchEssential: this.#doFetchEssential,
-            doFetchInfo: this.#doFetchInfo,
-            doFetchPackages: this.#doFetchPackages,
-            doFetchProjects: this.#doFetchProjects,
-            packagePageSize: this.#packagePageSize,
-            projectPageSize: this.#projectPageSize,
-            packagesContinueAfter: this.#packagesContinueAfter,
-            projectsContinueAfter: this.#projectsContinueAfter,
-            count_nodes: this.#count_nodes,
-            log: this.#log
-        });
+	getQuery() {
+		if (this.#log)
+			console.info("settings: ", {
+				doFetchEssential: this.#doFetchEssential,
+				doFetchInfo: this.#doFetchInfo,
+				doFetchPackages: this.#doFetchPackages,
+				doFetchProjects: this.#doFetchProjects,
+				packagePageSize: this.#packagePageSize,
+				projectPageSize: this.#projectPageSize,
+				packagesContinueAfter: this.#packagesContinueAfter,
+				projectsContinueAfter: this.#projectsContinueAfter,
+				count_nodes: this.#count_nodes,
+				log: this.#log,
+			});
 
-        const query = `{
+		const query = `{
             organization(login: "${this.#name}") {
                 login
                 ${this.#essentialBody()}
@@ -160,32 +180,32 @@ export class OrganizationFetcher {
                 ${this.#packagesBody()}
                 ${this.#projectsBody()}
             }
-        }`
+        }`;
 
-        if (this.#log) console.info(query);
-        return query;
-    }
+		if (this.#log) console.info(query);
+		return query;
+	}
 
-    #essentialBody() {
-        if (this.#doFetchEssential) {
-            if (this.#log) console.info("fetching essential");
+	#essentialBody() {
+		if (this.#doFetchEssential) {
+			if (this.#log) console.info("fetching essential");
 
-            return `
+			return `
             name
             description
             url
             avatarUrl
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #infoBody() {
-        if (this.#doFetchInfo) {
-            if (this.#log) console.info("fetching info");
+	#infoBody() {
+		if (this.#doFetchInfo) {
+			if (this.#log) console.info("fetching info");
 
-            return `
+			return `
             login
             email
             
@@ -198,115 +218,128 @@ export class OrganizationFetcher {
             
             announcement
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #packagesBody() {
-        if (this.#doFetchPackages) {
-            if (this.#log) console.info("fetching packages");
+	#packagesBody() {
+		if (this.#doFetchPackages) {
+			if (this.#log) console.info("fetching packages");
 
-            return AccountFetcher.packages(this.#projectPageSize, this.#projectsContinueAfter, this.#count_nodes);
-        }
+			return AccountFetcher.packages(
+				this.#projectPageSize,
+				this.#projectsContinueAfter,
+				this.#count_nodes,
+			);
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #projectsBody() {
-        if (this.#doFetchProjects) {
-            if (this.#log) console.info("fetching projects");
+	#projectsBody() {
+		if (this.#doFetchProjects) {
+			if (this.#log) console.info("fetching projects");
 
-            return AccountFetcher.projects(this.#packagePageSize, this.#packagesContinueAfter, this.#count_nodes);
-        }
+			return AccountFetcher.projects(
+				this.#packagePageSize,
+				this.#packagesContinueAfter,
+				this.#count_nodes,
+			);
+		}
 
-        return "";
-    }
+		return "";
+	}
 }
 
 export class UserFetcher {
-    #name: string;
+	#name: string;
 
-    get name() {
-        return this.#name;
-    }
+	get name() {
+		return this.#name;
+	}
 
-    #doFetchEssential = true;
-    #doFetchInfo = false;
-    #doFetchPackages = false;
-    #doFetchProjects = false;
+	#doFetchEssential = true;
+	#doFetchInfo = false;
+	#doFetchPackages = false;
+	#doFetchProjects = false;
 
-    #packagePageSize: number;
-    #projectPageSize: number;
+	#packagePageSize: number;
+	#projectPageSize: number;
 
-    #packagesContinueAfter: string | undefined | null = null;
-    #projectsContinueAfter: string | undefined | null = null;
+	#packagesContinueAfter: string | undefined | null = null;
+	#projectsContinueAfter: string | undefined | null = null;
 
-    #count_nodes = false;
-    #log = false;
+	#count_nodes = false;
+	#log = false;
 
-    constructor(name: string, scopes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
-        this.#log = DEV_MODE;
-        this.#count_nodes = DEV_MODE;
+	constructor(name: string, scopes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
+		this.#log = DEV_MODE;
+		this.#count_nodes = DEV_MODE;
 
-        this.#name = name;
+		this.#name = name;
 
-        this.#packagePageSize = AccountFetcher.defaultPageSize;
-        this.#projectPageSize = AccountFetcher.defaultPageSize;
+		this.#packagePageSize = AccountFetcher.defaultPageSize;
+		this.#projectPageSize = AccountFetcher.defaultPageSize;
 
-        this.#parseScopes(scopes);
-    }
+		this.#parseScopes(scopes);
+	}
 
-    #parseScopes(pageSizes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
-        if (this.#log) console.info("parsing scopes");
+	#parseScopes(pageSizes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
+		if (this.#log) console.info("parsing scopes");
 
-        for (const ps of pageSizes) {
-            switch (ps.scopeName) {
-                case GITHUB_ACCOUNT_SCOPES.ESSENTIAL:
-                    this.#doFetchEssential = true;
-                    break;
-                case GITHUB_ACCOUNT_SCOPES.INFO:
-                    this.#doFetchInfo = true;
-                    break;
-                case GITHUB_ACCOUNT_SCOPES.PACKAGES:
-                    this.#doFetchPackages = true;
-                    this.#packagePageSize = ps.pageSize;
-                    this.#packagesContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_ACCOUNT_SCOPES.PROJECTS:
-                    this.#doFetchProjects = true;
-                    this.#projectPageSize = ps.pageSize;
-                    this.#projectsContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
+		for (const ps of pageSizes) {
+			switch (ps.scopeName) {
+				case GITHUB_ACCOUNT_SCOPES.ESSENTIAL:
+					this.#doFetchEssential = true;
+					break;
+				case GITHUB_ACCOUNT_SCOPES.INFO:
+					this.#doFetchInfo = true;
+					break;
+				case GITHUB_ACCOUNT_SCOPES.PACKAGES:
+					this.#doFetchPackages = true;
+					this.#packagePageSize = ps.pageSize;
+					this.#packagesContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_ACCOUNT_SCOPES.PROJECTS:
+					this.#doFetchProjects = true;
+					this.#projectPageSize = ps.pageSize;
+					this.#projectsContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				default:
+					break;
+			}
+		}
+	}
 
-    #validateCursor(continueAfter: string | undefined | null) {
-        if (continueAfter && continueAfter !== "null" && continueAfter !== "undefined") {
-            return `"${continueAfter}"`;
-        }
+	#validateCursor(continueAfter: string | undefined | null) {
+		if (
+			continueAfter &&
+			continueAfter !== "null" &&
+			continueAfter !== "undefined"
+		) {
+			return `"${continueAfter}"`;
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    getQuery() {
-        if (this.#log) console.info("settings: ", {
-            doFetchEssential: this.#doFetchEssential,
-            doFetchInfo: this.#doFetchInfo,
-            doFetchPackages: this.#doFetchPackages,
-            doFetchProjects: this.#doFetchProjects,
-            packagePageSize: this.#packagePageSize,
-            projectPageSize: this.#projectPageSize,
-            packagesContinueAfter: this.#packagesContinueAfter,
-            projectsContinueAfter: this.#projectsContinueAfter,
-            count_nodes: this.#count_nodes,
-            log: this.#log
-        });
+	getQuery() {
+		if (this.#log)
+			console.info("settings: ", {
+				doFetchEssential: this.#doFetchEssential,
+				doFetchInfo: this.#doFetchInfo,
+				doFetchPackages: this.#doFetchPackages,
+				doFetchProjects: this.#doFetchProjects,
+				packagePageSize: this.#packagePageSize,
+				projectPageSize: this.#projectPageSize,
+				packagesContinueAfter: this.#packagesContinueAfter,
+				projectsContinueAfter: this.#projectsContinueAfter,
+				count_nodes: this.#count_nodes,
+				log: this.#log,
+			});
 
-        const query = `{
+		const query = `{
             user(login: "${this.#name}") {
                 login
                 ${this.#essentialBody()}
@@ -314,37 +347,46 @@ export class UserFetcher {
                 ${this.#packagesBody()}
                 ${this.#projectsBody()}
             }
-        }`
+        }`;
 
-        if (this.#log) console.info(query);
-        return query;
-    }
+		if (this.#log) console.info(query);
+		return query;
+	}
 
-    #projectsBody() {
-        if (this.#doFetchProjects) {
-            if (this.#log) console.info("fetching projects");
+	#projectsBody() {
+		if (this.#doFetchProjects) {
+			if (this.#log) console.info("fetching projects");
 
-            return AccountFetcher.projects(this.#projectPageSize, this.#projectsContinueAfter, this.#count_nodes);
-        }
+			return AccountFetcher.projects(
+				this.#projectPageSize,
+				this.#projectsContinueAfter,
+				this.#count_nodes,
+			);
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #packagesBody() {
-        if (this.#doFetchPackages) {
-            if (this.#log) console.info("fetching packages");
+	#packagesBody() {
+		if (this.#doFetchPackages) {
+			if (this.#log) console.info("fetching packages");
 
-            return AccountFetcher.packages(this.#packagePageSize, this.#packagesContinueAfter, this.#count_nodes);
-        }
+			return AccountFetcher.packages(
+				this.#packagePageSize,
+				this.#packagesContinueAfter,
+				this.#count_nodes,
+			);
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #infoBody() { // socialAccounts(first: 10)
-        if (this.#doFetchInfo) {
-            if (this.#log) console.info("fetching info");
+	#infoBody() {
+		// socialAccounts(first: 10)
+		if (this.#doFetchInfo) {
+			if (this.#log) console.info("fetching info");
 
-            return `
+			return `
             bio
             websiteUrl
             createdAt
@@ -369,16 +411,16 @@ export class UserFetcher {
                 }
             }
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #essentialBody() {
-        if (this.#doFetchEssential) {
-            if (this.#log) console.info("fetching essential");
+	#essentialBody() {
+		if (this.#doFetchEssential) {
+			if (this.#log) console.info("fetching essential");
 
-            return `
+			return `
             name
             pronouns
             location
@@ -387,174 +429,198 @@ export class UserFetcher {
             company
             email
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 }
 
 export class Repository {
-    #name: string | null = null;
+	#name: string | null = null;
 
-    get name() {
-        return this.#name;
-    }
+	get name() {
+		return this.#name;
+	}
 
-    #doFetchEssential = true;
-    #doFetchInfo = false;
-    #doFetchLicense = false;
-    #doFetchVulnerabilities = false;
-    #doFetchTopics = false;
-    #doFetchLabels = false;
-    #doFetchReleases = false;
-    #doFetchDeployments = false;
-    #doFetchLanguages = false;
-    #doFetchMilestones = false;
-    #doFetchIssues = false;
+	#doFetchEssential = true;
+	#doFetchInfo = false;
+	#doFetchLicense = false;
+	#doFetchVulnerabilities = false;
+	#doFetchTopics = false;
+	#doFetchLabels = false;
+	#doFetchReleases = false;
+	#doFetchDeployments = false;
+	#doFetchLanguages = false;
+	#doFetchMilestones = false;
+	#doFetchIssues = false;
 
-    static defaultPageSize = 10;
-    #rootPageSize: number;
-    #vulnerabilitiesPageSize: number;
-    #topicsPageSize: number;
-    #labelsPageSize: number;
-    #releasesPageSize: number;
-    #deploymentsPageSize: number;
-    #languagesPageSize: number;
-    #milestonesPageSize: number;
-    #issuesPageSize: number;
+	static defaultPageSize = 10;
+	#rootPageSize: number;
+	#vulnerabilitiesPageSize: number;
+	#topicsPageSize: number;
+	#labelsPageSize: number;
+	#releasesPageSize: number;
+	#deploymentsPageSize: number;
+	#languagesPageSize: number;
+	#milestonesPageSize: number;
+	#issuesPageSize: number;
 
-    #rootContinueAfter: string | undefined | null = null;
-    #vulnerabilitiesContinueAfter: string | undefined | null = null;
-    #topicsContinueAfter: string | undefined | null = null;
-    #labelsContinueAfter: string | undefined | null = null;
-    #releasesContinueAfter: string | undefined | null = null;
-    #deploymentsContinueAfter: string | undefined | null = null;
-    #languagesContinueAfter: string | undefined | null = null;
-    #milestonesContinueAfter: string | undefined | null = null;
-    #issuesContinueAfter: string | undefined | null = null;
+	#rootContinueAfter: string | undefined | null = null;
+	#vulnerabilitiesContinueAfter: string | undefined | null = null;
+	#topicsContinueAfter: string | undefined | null = null;
+	#labelsContinueAfter: string | undefined | null = null;
+	#releasesContinueAfter: string | undefined | null = null;
+	#deploymentsContinueAfter: string | undefined | null = null;
+	#languagesContinueAfter: string | undefined | null = null;
+	#milestonesContinueAfter: string | undefined | null = null;
+	#issuesContinueAfter: string | undefined | null = null;
 
-    #count_nodes = false;
-    #log = false;
+	#count_nodes = false;
+	#log = false;
 
-    constructor(args:
-        { name: string, scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] } |
-        { scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] }
-    ) {
-        this.#log = DEV_MODE;
+	constructor(
+		args:
+			| { name: string; scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] }
+			| { scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] },
+	) {
+		this.#log = DEV_MODE;
 
-        if ("name" in args) {
-            this.#name = args.name;
-        }
+		if ("name" in args) {
+			this.#name = args.name;
+		}
 
-        this.#rootPageSize = Repository.defaultPageSize;
-        this.#vulnerabilitiesPageSize = Repository.defaultPageSize;
-        this.#topicsPageSize = Repository.defaultPageSize;
-        this.#labelsPageSize = Repository.defaultPageSize;
-        this.#releasesPageSize = Repository.defaultPageSize;
-        this.#deploymentsPageSize = Repository.defaultPageSize;
-        this.#languagesPageSize = Repository.defaultPageSize;
-        this.#milestonesPageSize = Repository.defaultPageSize;
-        this.#issuesPageSize = Repository.defaultPageSize;
+		this.#rootPageSize = Repository.defaultPageSize;
+		this.#vulnerabilitiesPageSize = Repository.defaultPageSize;
+		this.#topicsPageSize = Repository.defaultPageSize;
+		this.#labelsPageSize = Repository.defaultPageSize;
+		this.#releasesPageSize = Repository.defaultPageSize;
+		this.#deploymentsPageSize = Repository.defaultPageSize;
+		this.#languagesPageSize = Repository.defaultPageSize;
+		this.#milestonesPageSize = Repository.defaultPageSize;
+		this.#issuesPageSize = Repository.defaultPageSize;
 
-        this.#parseScopes(args.scopes);
-    }
+		this.#parseScopes(args.scopes);
+	}
 
-    #parseScopes(pageSizes: PageSize<GITHUB_REPOSITORY_SCOPES>[]) {
-        if (this.#log) console.info("parsing scopes");
+	#parseScopes(pageSizes: PageSize<GITHUB_REPOSITORY_SCOPES>[]) {
+		if (this.#log) console.info("parsing scopes");
 
-        for (const ps of pageSizes) {
-            switch (ps.scopeName) { // if the scope doesn't have children, pageSize and continueAfter is for the root (repositories)
-                case GITHUB_REPOSITORY_SCOPES.ESSENTIAL:
-                    this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
-                    this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.INFO:
-                    this.#doFetchInfo = true;
-                    this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
-                    this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.DEPLOYMENTS:
-                    this.#doFetchDeployments = true;
-                    this.#deploymentsPageSize = ps.pageSize;
-                    this.#deploymentsContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.LABELS:
-                    this.#doFetchLabels = true;
-                    this.#labelsPageSize = ps.pageSize;
-                    this.#labelsContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.RELEASES:
-                    this.#doFetchReleases = true;
-                    this.#releasesPageSize = ps.pageSize;
-                    this.#releasesContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.TOPICS:
-                    this.#doFetchTopics = true;
-                    this.#topicsPageSize = ps.pageSize;
-                    this.#topicsContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.VULNERABILITIES:
-                    this.#doFetchVulnerabilities = true;
-                    this.#vulnerabilitiesPageSize = ps.pageSize;
-                    this.#vulnerabilitiesContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.LANGUAGES:
-                    this.#doFetchLanguages = true;
-                    this.#languagesPageSize = ps.pageSize;
-                    this.#languagesContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.MILESTONES:
-                    this.#doFetchMilestones = true;
-                    this.#milestonesPageSize = ps.pageSize;
-                    this.#milestonesContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.ISSUES:
-                    this.#doFetchIssues = true;
-                    this.#issuesPageSize = ps.pageSize;
-                    this.#issuesContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.LICENSE:
-                    this.#doFetchLicense = true;
-                    this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
-                    this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                case GITHUB_REPOSITORY_SCOPES.COUNT:
-                    this.#count_nodes = true;
-                    this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
-                    this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
+		for (const ps of pageSizes) {
+			switch (
+				ps.scopeName // if the scope doesn't have children, pageSize and continueAfter is for the root (repositories)
+			) {
+				case GITHUB_REPOSITORY_SCOPES.ESSENTIAL:
+					this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
+					this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.INFO:
+					this.#doFetchInfo = true;
+					this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
+					this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.DEPLOYMENTS:
+					this.#doFetchDeployments = true;
+					this.#deploymentsPageSize = ps.pageSize;
+					this.#deploymentsContinueAfter = this.#validateCursor(
+						ps.continueAfter,
+					);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.LABELS:
+					this.#doFetchLabels = true;
+					this.#labelsPageSize = ps.pageSize;
+					this.#labelsContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.RELEASES:
+					this.#doFetchReleases = true;
+					this.#releasesPageSize = ps.pageSize;
+					this.#releasesContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.TOPICS:
+					this.#doFetchTopics = true;
+					this.#topicsPageSize = ps.pageSize;
+					this.#topicsContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.VULNERABILITIES:
+					this.#doFetchVulnerabilities = true;
+					this.#vulnerabilitiesPageSize = ps.pageSize;
+					this.#vulnerabilitiesContinueAfter = this.#validateCursor(
+						ps.continueAfter,
+					);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.LANGUAGES:
+					this.#doFetchLanguages = true;
+					this.#languagesPageSize = ps.pageSize;
+					this.#languagesContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.MILESTONES:
+					this.#doFetchMilestones = true;
+					this.#milestonesPageSize = ps.pageSize;
+					this.#milestonesContinueAfter = this.#validateCursor(
+						ps.continueAfter,
+					);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.ISSUES:
+					this.#doFetchIssues = true;
+					this.#issuesPageSize = ps.pageSize;
+					this.#issuesContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.LICENSE:
+					this.#doFetchLicense = true;
+					this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
+					this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				case GITHUB_REPOSITORY_SCOPES.COUNT:
+					this.#count_nodes = true;
+					this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
+					this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
+				default:
+					break;
+			}
+		}
+	}
 
-    #validateCursor(continueAfter: string | undefined | null) {
-        if (continueAfter && continueAfter !== "null" && continueAfter !== "undefined") {
-            return `"${continueAfter}"`;
-        }
+	#validateCursor(continueAfter: string | undefined | null) {
+		if (
+			continueAfter &&
+			continueAfter !== "null" &&
+			continueAfter !== "undefined"
+		) {
+			return `"${continueAfter}"`;
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    getQuery(issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null, milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null) {
-        const final_issue_states = issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN, GITHUB_MILESTONE_ISSUE_STATES.CLOSED];
-        let query = this.#getInfoQuery();
+	getQuery(
+		issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null,
+		milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
+		milestone_number: number | null = null,
+	) {
+		const final_issue_states = issues_states ?? [
+			GITHUB_MILESTONE_ISSUE_STATES.OPEN,
+			GITHUB_MILESTONE_ISSUE_STATES.CLOSED,
+		];
+		let query = this.#getInfoQuery();
 
-        if (this.#doFetchMilestones || this.#doFetchIssues) {
-            if (this.#log) console.info("fetching milestones and/or issues");
+		if (this.#doFetchMilestones || this.#doFetchIssues) {
+			if (this.#log) console.info("fetching milestones and/or issues");
 
-            query = this.#getIssuesQuery(final_issue_states, milestones_amount, milestone_number);
-        }
+			query = this.#getIssuesQuery(
+				final_issue_states,
+				milestones_amount,
+				milestone_number,
+			);
+		}
 
-        if (this.#log) console.info(query);
+		if (this.#log) console.info(query);
 
-        return query;
-    }
+		return query;
+	}
 
-    #getInfoQuery() {
-        if (this.#name) {
-            return `
+	#getInfoQuery() {
+		if (this.#name) {
+			return `
                 repository(name: "${this.#name}") {
                     ${this.#essentialBody()}
                     ${this.#infoBody()}
@@ -568,10 +634,12 @@ export class Repository {
                     ${this.#languagesBody()}
                 }
             `;
-        }
+		}
 
-        return `
-        repositories(first: ${this.#rootPageSize}, after: ${this.#rootContinueAfter}) {
+		return `
+        repositories(first: ${this.#rootPageSize}, after: ${
+					this.#rootContinueAfter
+				}) {
             ${this.#count_nodes ? "totalCount" : ""}
 
             pageInfo {
@@ -592,11 +660,15 @@ export class Repository {
                 ${this.#languagesBody()}
             }
         }`;
-    }
+	}
 
-    #getIssuesQuery(issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null, milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null) {
-        if (this.#name) {
-            return `
+	#getIssuesQuery(
+		issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null,
+		milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
+		milestone_number: number | null = null,
+	) {
+		if (this.#name) {
+			return `
                 repository(name: "${this.#name}") {
                     ${this.#essentialBody()}
                     ${this.#infoBody()}
@@ -609,13 +681,19 @@ export class Repository {
                     ${this.#deploymentsBody()}
                     ${this.#languagesBody()}
 
-                    ${this.#milestonesBody(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number)}
+                    ${this.#milestonesBody(
+											issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
+											milestones_amount,
+											milestone_number,
+										)}
                 }
             `;
-        }
+		}
 
-        return `
-        repositories(first: ${this.#rootPageSize}, after: ${this.#rootContinueAfter}) {
+		return `
+        repositories(first: ${this.#rootPageSize}, after: ${
+					this.#rootContinueAfter
+				}) {
             ${this.#count_nodes ? "totalCount" : ""}
 
             pageInfo {
@@ -635,29 +713,33 @@ export class Repository {
                 ${this.#deploymentsBody()}
                 ${this.#languagesBody()}
                 
-                ${this.#milestonesBody(issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN], milestones_amount, milestone_number)}
+                ${this.#milestonesBody(
+									issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
+									milestones_amount,
+									milestone_number,
+								)}
             }
         }`;
-    }
+	}
 
-    #essentialBody() {
-        if (this.#doFetchEssential) {
-            if (this.#log) console.info("fetching essential infos");
+	#essentialBody() {
+		if (this.#doFetchEssential) {
+			if (this.#log) console.info("fetching essential infos");
 
-            return `
+			return `
             name
             description
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #infoBody() {
-        if (this.#doFetchInfo) {
-            if (this.#log) console.info("fetching info");
+	#infoBody() {
+		if (this.#doFetchInfo) {
+			if (this.#log) console.info("fetching info");
 
-            return `
+			return `
             updatedAt
             createdAt
             isArchived
@@ -669,16 +751,16 @@ export class Repository {
             sshUrl
             projectsUrl
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #licenseBody() {
-        if (this.#doFetchLicense) {
-            if (this.#log) console.info("fetching license");
+	#licenseBody() {
+		if (this.#doFetchLicense) {
+			if (this.#log) console.info("fetching license");
 
-            return `
+			return `
             licenseInfo {
                 url
                 spdxId
@@ -692,17 +774,19 @@ export class Repository {
                 }
             }
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #vulnerabilitiesBody() {
-        if (this.#doFetchVulnerabilities) {
-            if (this.#log) console.info("fetching vulnerabilities");
+	#vulnerabilitiesBody() {
+		if (this.#doFetchVulnerabilities) {
+			if (this.#log) console.info("fetching vulnerabilities");
 
-            return `
-            vulnerabilityAlerts(first: ${this.#vulnerabilitiesPageSize}, after: ${this.#vulnerabilitiesContinueAfter}) {
+			return `
+            vulnerabilityAlerts(first: ${
+							this.#vulnerabilitiesPageSize
+						}, after: ${this.#vulnerabilitiesContinueAfter}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -744,17 +828,19 @@ export class Repository {
                 }
             }
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #topicsBody() {
-        if (this.#doFetchTopics) {
-            if (this.#log) console.info("fetching topics");
+	#topicsBody() {
+		if (this.#doFetchTopics) {
+			if (this.#log) console.info("fetching topics");
 
-            return `
-            repositoryTopics(first: ${this.#topicsPageSize}, after: ${this.#topicsContinueAfter}) {
+			return `
+            repositoryTopics(first: ${this.#topicsPageSize}, after: ${
+							this.#topicsContinueAfter
+						}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -770,17 +856,19 @@ export class Repository {
                 }
             }
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #labelsBody() {
-        if (this.#doFetchLabels) {
-            if (this.#log) console.info("fetching labels");
+	#labelsBody() {
+		if (this.#doFetchLabels) {
+			if (this.#log) console.info("fetching labels");
 
-            return `
-            labels(first: ${this.#labelsPageSize}, after: ${this.#labelsContinueAfter}) {
+			return `
+            labels(first: ${this.#labelsPageSize}, after: ${
+							this.#labelsContinueAfter
+						}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -797,17 +885,20 @@ export class Repository {
                 }
             }
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #releasesBody() { // releaseAssets(first: 100)
-        if (this.#doFetchReleases) {
-            if (this.#log) console.info("fetching releases");
+	#releasesBody() {
+		// releaseAssets(first: 100)
+		if (this.#doFetchReleases) {
+			if (this.#log) console.info("fetching releases");
 
-            return `
-            releases(first: ${this.#releasesPageSize}, after: ${this.#releasesContinueAfter}) {
+			return `
+            releases(first: ${this.#releasesPageSize}, after: ${
+							this.#releasesContinueAfter
+						}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -860,17 +951,20 @@ export class Repository {
                 }
             }
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #deploymentsBody() { // statuses(first: 3)
-        if (this.#doFetchDeployments) {
-            if (this.#log) console.info("fetching deployments");
+	#deploymentsBody() {
+		// statuses(first: 3)
+		if (this.#doFetchDeployments) {
+			if (this.#log) console.info("fetching deployments");
 
-            return `
-            deployments(first: ${this.#deploymentsPageSize}, after: ${this.#deploymentsContinueAfter}) {
+			return `
+            deployments(first: ${this.#deploymentsPageSize}, after: ${
+							this.#deploymentsContinueAfter
+						}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -943,22 +1037,24 @@ export class Repository {
                 }
             }
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #languagesBody() {
-        if (this.#doFetchLanguages) {
-            if (this.#log) console.info("fetching languages");
+	#languagesBody() {
+		if (this.#doFetchLanguages) {
+			if (this.#log) console.info("fetching languages");
 
-            return `
+			return `
             primaryLanguage {
                 color
                 name
             }
 
-            languages(first: ${this.#languagesPageSize}, after: ${this.#languagesContinueAfter}) {
+            languages(first: ${this.#languagesPageSize}, after: ${
+							this.#languagesContinueAfter
+						}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -972,21 +1068,26 @@ export class Repository {
                 }
             }
             `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    /**
-     * Supports both issues and milestones.
-     */
-    #milestonesBody(issues_state: GITHUB_MILESTONE_ISSUE_STATES[], milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL, milestone_number: number | null = null) {
-        const IS_SINGULAR = milestones_amount === GRAMMATICAL_NUMBER.SINGULAR;
-        const head = IS_SINGULAR && milestone_number ?
-            `milestone(number: ${milestone_number})` :
-            `milestones(first: ${this.#milestonesPageSize}, after: ${this.#milestonesContinueAfter})`;
+	/**
+	 * Supports both issues and milestones.
+	 */
+	#milestonesBody(
+		issues_state: GITHUB_MILESTONE_ISSUE_STATES[],
+		milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
+		milestone_number: number | null = null,
+	) {
+		const IS_SINGULAR = milestones_amount === GRAMMATICAL_NUMBER.SINGULAR;
+		const head =
+			IS_SINGULAR && milestone_number
+				? `milestone(number: ${milestone_number})`
+				: `milestones(first: ${this.#milestonesPageSize}, after: ${this.#milestonesContinueAfter})`;
 
-        const info_body = `
+		const info_body = `
         number
         createdAt
         closedAt
@@ -999,16 +1100,19 @@ export class Repository {
         state
         `;
 
-        if (this.#doFetchMilestones) {
-            if (this.#log) console.info("fetching milestones and issues");
+		if (this.#doFetchMilestones) {
+			if (this.#log) console.info("fetching milestones and issues");
 
-            return `
+			return `
                 ${head} {
-                    ${IS_SINGULAR ? `
+                    ${
+											IS_SINGULAR
+												? `
                     ${info_body}
 
                     ${this.#issuesBody(issues_state)}
-                    ` : `
+                    `
+												: `
                     ${this.#count_nodes ? "totalCount" : ""}
                     
                     pageInfo {
@@ -1021,46 +1125,52 @@ export class Repository {
         
                         ${this.#issuesBody(issues_state)}
                     }
-                    `}
+                    `
+										}
                 }`;
-        }
+		}
 
-        if (this.#doFetchIssues) {
-            if (this.#log) console.info("fetching issues");
+		if (this.#doFetchIssues) {
+			if (this.#log) console.info("fetching issues");
 
-            return this.#issuesBody(issues_state);
-        }
+			return this.#issuesBody(issues_state);
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #issuesBody(state: GITHUB_MILESTONE_ISSUE_STATES[]) {
-        if (this.#doFetchIssues) {
-            const fetchOpen = state.includes(GITHUB_MILESTONE_ISSUE_STATES.OPEN);
-            const fetchClosed = state.includes(GITHUB_MILESTONE_ISSUE_STATES.CLOSED);
+	#issuesBody(state: GITHUB_MILESTONE_ISSUE_STATES[]) {
+		if (this.#doFetchIssues) {
+			const fetchOpen = state.includes(GITHUB_MILESTONE_ISSUE_STATES.OPEN);
+			const fetchClosed = state.includes(GITHUB_MILESTONE_ISSUE_STATES.CLOSED);
 
-            const open = `
-                open_issues: issues(first: ${this.#issuesPageSize}, states: [OPEN], after: ${this.#issuesContinueAfter}) {
+			const open = `
+                open_issues: issues(first: ${
+									this.#issuesPageSize
+								}, states: [OPEN], after: ${this.#issuesContinueAfter}) {
                     ${this.#issuesNodes()}
                 }`;
 
-            const closed = `
-                closed_issues: issues(first: ${this.#issuesPageSize}, states: [CLOSED], after: ${this.#issuesContinueAfter}) {
+			const closed = `
+                closed_issues: issues(first: ${
+									this.#issuesPageSize
+								}, states: [CLOSED], after: ${this.#issuesContinueAfter}) {
                     ${this.#issuesNodes()}
                 }`;
 
-            return `
+			return `
                 ${fetchOpen ? open : ""}
                 ${fetchClosed ? closed : ""}
                 `;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 
-    #issuesNodes() { // labels(first: 4)
-        if (this.#doFetchIssues) {
-            return `
+	#issuesNodes() {
+		// labels(first: 4)
+		if (this.#doFetchIssues) {
+			return `
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -1096,8 +1206,8 @@ export class Repository {
                         }
                     }
                 }`;
-        }
+		}
 
-        return "";
-    }
+		return "";
+	}
 }
