@@ -16,6 +16,7 @@ import { GITHUB_API_HEADERS } from "../globals";
 import { getOctokitObject } from "./authenticate";
 import type { OctokitResponse } from "@octokit/types";
 import { MicroserviceError } from "../error";
+import { DEV_MODE } from "../../../../environment";
 
 /**
  * Fetches the rate limit using the provided authentication and context set.
@@ -53,6 +54,8 @@ export async function fetchGithubDataUsingRest(
 	set: Context["set"],
 	authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null,
 ): Promise<RestResponse<OctokitResponse<any, number>>> {
+	if (DEV_MODE) console.log("fetchGithubDataUsingRest", path, auth, authStrategy);
+
 	if (auth === undefined) {
 		set.status = 400;
 		throw new MicroserviceError({
@@ -92,6 +95,8 @@ export async function fetchGithubDataUsingGraphql<T>(
 	set: Context["set"],
 	authStrategy: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS | null = null,
 ): Promise<GraphqlResponse<T>> {
+	if (DEV_MODE) console.log("fetchGithubDataUsingGraphql", graphqlInput, auth, authStrategy);
+
 	if (auth === undefined) {
 		set.status = 400;
 		throw new MicroserviceError({
@@ -129,6 +134,7 @@ const tryFetch = async <T>(
 
 	try {
 		const result = await fetchFunction();
+		if (DEV_MODE) console.log("fetchFunctionResult", result);
 
 		return { success: true, data: result };
 		// biome-ignore lint/suspicious/noExplicitAny:

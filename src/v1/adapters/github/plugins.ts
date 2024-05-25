@@ -2,7 +2,6 @@ import { Elysia } from "elysia";
 import {
 	GITHUB_JWT,
 	checkForTokenPresence,
-	checkIfTokenIsValid,
 } from "./functions/authenticate";
 import bearer from "@elysiajs/bearer";
 import { DEV_MODE } from "../../../environment";
@@ -26,7 +25,7 @@ export const guardEndpoints = (endpoints: Elysia) =>
 			{
 				async beforeHandle({ bearer, set }) {
 					const token = checkForTokenPresence(bearer, set);
-					if (DEV_MODE) console.log("JWT:", token);
+					if (DEV_MODE) console.log("Token:", token);
 				},
 			},
 			(app) => app.use(endpoints),

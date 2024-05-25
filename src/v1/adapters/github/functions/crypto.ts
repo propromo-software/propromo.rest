@@ -1,0 +1,90 @@
+import { PAT_SALT as SALT } from "../../../../environment";
+
+export async function encryptString(plaintext: string) {
+    const plaintextBuffer = new TextEncoder().encode(plaintext);
+
+    const passwordKey = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(SALT),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+    );
+
+    const key = await crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: new TextEncoder().encode(SALT),
+            iterations: 100000,
+            hash: "SHA-256",
+        },
+        passwordKey,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+    );
+
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    const encryptedBuffer = await crypto.subtle.encrypt(
+        {
+            name: "AES-GCM",
+            iv: iv,
+        },
+        key,
+        plaintextBuffer
+    );
+
+    const encryptedString = btoa(
+        String.fromCharCode.apply(null, Array.from(new Uint8Array(iv))) +
+        String.fromCharCode.apply(null, Array.from(new Uint8Array(encryptedBuffer)))
+    );
+
+    return encryptedString;
+}
+
+export async function decryptString(encryptedString: string) {
+    console.log("encryptedString", encryptedString);
+
+    const encryptedBuffer = Uint8Array.from(
+        atob(encryptedString),
+        (c) => c.charCodeAt(0)
+    );
+
+    const iv = encryptedBuffer.slice(0, 12);
+    const ciphertext = encryptedBuffer.slice(12);
+
+    const passwordKey = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(SALT),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+    );
+
+    const key = await crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: new TextEncoder().encode(SALT),
+            iterations: 100000,
+            hash: "SHA-256",
+        },
+        passwordKey,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+    );
+
+    const decryptedBuffer = await crypto.subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv: iv,
+        },
+        key,
+        ciphertext
+    );
+
+    const decryptedString = new TextDecoder().decode(decryptedBuffer);
+
+    return decryptedString;
+}

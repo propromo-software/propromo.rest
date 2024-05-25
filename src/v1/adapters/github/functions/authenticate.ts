@@ -10,6 +10,7 @@ import { GITHUB_QUOTA } from "../graphql";
 import { maybeStringToNumber } from "./parse";
 import { DEV_MODE, JWT_SECRET } from "../../../../environment";
 import { MicroserviceError } from "../error";
+import { decryptString, encryptString } from "./crypto";
 
 /* JWT */
 
@@ -22,9 +23,9 @@ export const GITHUB_JWT = new Elysia().use(
 		alg: "HS256" /* alt: RS256 */,
 		iss: "propromo",
 		/* schema: t.Object({ // not working properly (probably the auth parameter)
-                auth_type: t.Enum(GITHUB_AUTHENTICATION_STRATEGY_OPTIONS),
-                auth: t.Union([t.String(), t.Number()]) // token or installation_id
-            }) */
+				auth_type: t.Enum(GITHUB_AUTHENTICATION_STRATEGY_OPTIONS),
+				auth: t.Union([t.String(), t.Number()]) // token or installation_id
+			}) */
 	}),
 );
 
@@ -39,7 +40,7 @@ export const GITHUB_JWT = new Elysia().use(
 export function checkForTokenPresence(
 	token: string | undefined,
 	set: Context["set"],
-	errorMessage = "Token is missing. Create one at https://github.com/settings/tokens.",
+	errorMessage: string = "Token is missing. Create one at https://github.com/settings/tokens.",
 ): string {
 	if (!token || token.trim().length === 0) {
 		// Authorization: Bearer <token>
@@ -91,7 +92,6 @@ export const RESOLVE_JWT = new Elysia()
 		async ({ propromoRestAdaptersGithub, headers: { authorization }, set }) => {
 			const bearer = authorization?.split(" ")[1];
 			const token = checkForTokenPresence(bearer, set);
-			if (DEV_MODE) console.log("Token:", token);
 
 			const jwt = await propromoRestAdaptersGithub.verify(token);
 			if (DEV_MODE) console.log(jwt);
@@ -108,13 +108,13 @@ export const RESOLVE_JWT = new Elysia()
 				});
 			}
 
-			const valid = await checkIfTokenIsValid(jwt.auth, set); // check again, just to be sure (guardEndpoints-plugin)
-			if (DEV_MODE) console.log("JWT:", jwt, "Valid:", valid);
+			const patToken = await decryptString(jwt.auth);
+			if (DEV_MODE) console.log("decryptedToken:", patToken);
 
 			return {
 				fetchParams: {
 					auth_type: jwt.auth_type as GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,
-					auth: jwt.auth,
+					auth: patToken,
 				},
 			};
 		},
@@ -130,9 +130,12 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 		async ({ body, propromoRestAdaptersGithub }) => {
 			const auth = maybeStringToNumber(body?.installation_id!); // bearer is checked beforeHandle
 
+			const token = await encryptString(auth as string);
+			if (DEV_MODE) console.log("encryptedToken", token);
+
 			const bearerToken = await propromoRestAdaptersGithub.sign({
 				auth_type: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP,
-				auth,
+				auth: token,
 				iat: Math.floor(Date.now() / 1000) - 60,
 				/* exp: Math.floor(Date.now() / 1000) + (10 * 60) */
 			});
@@ -187,9 +190,12 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 		async ({ propromoRestAdaptersGithub, bearer }) => {
 			const auth = maybeStringToNumber(bearer!); // bearer is checked beforeHandle
 
+			const token = await encryptString(auth as string);
+			if (DEV_MODE) console.log("encryptedToken", token);
+
 			const bearerToken = await propromoRestAdaptersGithub.sign({
 				auth_type: GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.TOKEN,
-				auth,
+				auth: token,
 				iat: Math.floor(Date.now() / 1000) - 60,
 				/* exp: Math.floor(Date.now() / 1000) + (10 * 60) */
 			});
@@ -200,7 +206,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 			async beforeHandle({ bearer, set }) {
 				const token = checkForTokenPresence(bearer, set);
 				const valid = await checkIfTokenIsValid(token, set);
-				if (DEV_MODE) console.log("JWT:", token, "Valid:", valid);
+				if (DEV_MODE) console.log("decryptedToken:", token, "Valid:", valid);
 			},
 			detail: {
 				description: "Authenticate using a GitHub PAT.",
