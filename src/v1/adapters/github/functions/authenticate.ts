@@ -65,6 +65,8 @@ export async function checkIfTokenIsValid(
 	token: string | number,
 	set: Context["set"],
 ): Promise<boolean> {
+	if (token === "use-open-source-program") return true;
+
 	const response = await fetchGithubDataUsingGraphql<
 		{ rateLimit: RateLimit } | undefined | null
 	>(GITHUB_QUOTA, token, set);
@@ -206,7 +208,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 			async beforeHandle({ bearer, set }) {
 				const token = checkForTokenPresence(bearer, set);
 				const valid = await checkIfTokenIsValid(token, set);
-				if (DEV_MODE) console.log("decryptedToken:", token, "Valid:", valid);
+				if (DEV_MODE) console.log("decryptedToken:", token, "| valid:", valid);
 			},
 			detail: {
 				description: "Authenticate using a GitHub PAT.",
