@@ -7,8 +7,8 @@ import {
 	bigserial,
 	timestamp,
 	text,
-	bigint,
 	index,
+	bigint,
 	boolean,
 	doublePrecision,
 	date,
@@ -67,16 +67,6 @@ export const failedJobs = pgTable(
 	},
 );
 
-export const monitorUser = pgTable("monitor_user", {
-	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
-	createdAt: timestamp("created_at", { mode: "string" }),
-	updatedAt: timestamp("updated_at", { mode: "string" }),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	monitorId: bigint("monitor_id", { mode: "number" }).notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	userId: bigint("user_id", { mode: "number" }).notNull(),
-});
-
 export const personalAccessTokens = pgTable(
 	"personal_access_tokens",
 	{
@@ -111,7 +101,7 @@ export const monitors = pgTable("monitors", {
 	loginName: varchar("login_name", { length: 255 }),
 	projectUrl: varchar("project_url", { length: 255 }),
 	organizationName: varchar("organization_name", { length: 255 }),
-	patToken: varchar("pat_token", { length: 255 }),
+	patToken: text("pat_token"),
 	readme: varchar("readme", { length: 255 }),
 	public: boolean("public"),
 	title: varchar("title", { length: 255 }),
@@ -120,6 +110,16 @@ export const monitors = pgTable("monitors", {
 	monitorHash: varchar("monitor_hash", { length: 255 }).notNull(),
 	createdAt: timestamp("created_at", { mode: "string" }),
 	updatedAt: timestamp("updated_at", { mode: "string" }),
+});
+
+export const monitorUser = pgTable("monitor_user", {
+	id: bigserial("id", { mode: "bigint" }).primaryKey().notNull(),
+	createdAt: timestamp("created_at", { mode: "string" }),
+	updatedAt: timestamp("updated_at", { mode: "string" }),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	monitorId: bigint("monitor_id", { mode: "number" }).notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	userId: bigint("user_id", { mode: "number" }).notNull(),
 });
 
 export const milestones = pgTable("milestones", {
