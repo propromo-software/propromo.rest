@@ -15,8 +15,11 @@ jobs:
           bun-version: 1.1.6
 
       - name: Install dependencies
-        run: bun install
+        run: |
+          bun install
+          bun install lcov-parse
 
+        # outputs coverage/lcov.info
       - name: Run tests
         env:
           DEV_MODE: true
@@ -29,11 +32,15 @@ jobs:
           GITHUB_APP_ID: ${{ secrets.GH_APP_ID }}
           GITHUB_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
           GITHUB_APP_WEBHOOK_SECRET: ${{ secrets.GH_APP_WEBHOOK_SECRET }}
-        run: bun test --coverage
+        run: bun test --coverage --coverage-reporter lcov --coverage-dir coverage
 
-      # TODO: waiting for bun to support coverage report formats
-      #- name: Update Coverage Badge
-      #  # GitHub actions: default branch variable
-      #  # https://stackoverflow.com/questions/64781462/github-actions-default-branch-variable
-      #  if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-      #  uses: we-cli/coverage-badge-action@main
+        # generate coverage-summary.json from lcov.info
+      - name: Generate Coverage Summary
+        run: lcov-parse ./coverage/lcov.info > coverage/coverage-summary.json
+
+        # requires ./coverage/coverage-summary.json
+      - name: Update Coverage Badge
+        # GitHub actions: default branch variable
+        # https://stackoverflow.com/questions/64781462/github-actions-default-branch-variable
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: we-cli/coverage-badge-action@main
