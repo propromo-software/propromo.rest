@@ -40,7 +40,7 @@ export const GITHUB_JWT = new Elysia().use(
 export function checkForTokenPresence(
 	token: string | undefined,
 	set: Context["set"],
-	errorMessage: string = "Token is missing. Create one at https://github.com/settings/tokens.",
+	errorMessage = "Token is missing. Create one at https://github.com/settings/tokens.",
 ): string {
 	if (!token || token.trim().length === 0) {
 		// Authorization: Bearer <token>
@@ -110,7 +110,7 @@ export const RESOLVE_JWT = new Elysia()
 				});
 			}
 
-			const patToken = await decryptString(jwt.auth);
+			const patToken = await decryptString(String(jwt.auth));
 			if (DEV_MODE) console.log("decryptedToken:", patToken);
 
 			return {
@@ -130,7 +130,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 	.post(
 		"/app",
 		async ({ body, propromoRestAdaptersGithub }) => {
-			const auth = maybeStringToNumber(body?.installation_id!); // bearer is checked beforeHandle
+			const auth = maybeStringToNumber(body?.installation_id); // bearer is checked beforeHandle
 
 			const token = await encryptString(auth as string);
 			if (DEV_MODE) console.log("encryptedToken", token);
@@ -190,7 +190,7 @@ export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 	.post(
 		"/token",
 		async ({ propromoRestAdaptersGithub, bearer }) => {
-			const auth = maybeStringToNumber(bearer!); // bearer is checked beforeHandle
+			const auth = maybeStringToNumber(bearer); // bearer is checked beforeHandle
 
 			const token = await encryptString(auth as string);
 			if (DEV_MODE) console.log("encryptedToken", token);

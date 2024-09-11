@@ -13,6 +13,7 @@
 		}
 	},
 	"formatter": {
-		"enabled": true
+		"enabled": true,
+		"ignore": ["src/v1/adapters/github/graphql.ts", "src/v1/adapters/github/scopes.ts", "main-drizzle", "next-drizzle"]
 	}
 }

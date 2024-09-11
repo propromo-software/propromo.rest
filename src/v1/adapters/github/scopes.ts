@@ -507,7 +507,7 @@ export class Repository {
 
 		for (const ps of pageSizes) {
 			switch (
-				ps.scopeName // if the scope doesn't have children, pageSize and continueAfter is for the root (repositories)
+			ps.scopeName // if the scope doesn't have children, pageSize and continueAfter is for the root (repositories)
 			) {
 				case GITHUB_REPOSITORY_SCOPES.ESSENTIAL:
 					this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
@@ -637,9 +637,8 @@ export class Repository {
 		}
 
 		return `
-        repositories(first: ${this.#rootPageSize}, after: ${
-					this.#rootContinueAfter
-				}) {
+        repositories(first: ${this.#rootPageSize}, after: ${this.#rootContinueAfter
+			}) {
             ${this.#count_nodes ? "totalCount" : ""}
 
             pageInfo {
@@ -682,18 +681,17 @@ export class Repository {
                     ${this.#languagesBody()}
 
                     ${this.#milestonesBody(
-											issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
-											milestones_amount,
-											milestone_number,
-										)}
+				issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
+				milestones_amount,
+				milestone_number,
+			)}
                 }
             `;
 		}
 
 		return `
-        repositories(first: ${this.#rootPageSize}, after: ${
-					this.#rootContinueAfter
-				}) {
+        repositories(first: ${this.#rootPageSize}, after: ${this.#rootContinueAfter
+			}) {
             ${this.#count_nodes ? "totalCount" : ""}
 
             pageInfo {
@@ -714,10 +712,10 @@ export class Repository {
                 ${this.#languagesBody()}
                 
                 ${this.#milestonesBody(
-									issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
-									milestones_amount,
-									milestone_number,
-								)}
+				issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
+				milestones_amount,
+				milestone_number,
+			)}
             }
         }`;
 	}
@@ -784,9 +782,8 @@ export class Repository {
 			if (this.#log) console.info("fetching vulnerabilities");
 
 			return `
-            vulnerabilityAlerts(first: ${
-							this.#vulnerabilitiesPageSize
-						}, after: ${this.#vulnerabilitiesContinueAfter}) {
+            vulnerabilityAlerts(first: ${this.#vulnerabilitiesPageSize
+				}, after: ${this.#vulnerabilitiesContinueAfter}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -838,9 +835,8 @@ export class Repository {
 			if (this.#log) console.info("fetching topics");
 
 			return `
-            repositoryTopics(first: ${this.#topicsPageSize}, after: ${
-							this.#topicsContinueAfter
-						}) {
+            repositoryTopics(first: ${this.#topicsPageSize}, after: ${this.#topicsContinueAfter
+				}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -866,9 +862,8 @@ export class Repository {
 			if (this.#log) console.info("fetching labels");
 
 			return `
-            labels(first: ${this.#labelsPageSize}, after: ${
-							this.#labelsContinueAfter
-						}) {
+            labels(first: ${this.#labelsPageSize}, after: ${this.#labelsContinueAfter
+				}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -896,9 +891,8 @@ export class Repository {
 			if (this.#log) console.info("fetching releases");
 
 			return `
-            releases(first: ${this.#releasesPageSize}, after: ${
-							this.#releasesContinueAfter
-						}) {
+            releases(first: ${this.#releasesPageSize}, after: ${this.#releasesContinueAfter
+				}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -962,9 +956,8 @@ export class Repository {
 			if (this.#log) console.info("fetching deployments");
 
 			return `
-            deployments(first: ${this.#deploymentsPageSize}, after: ${
-							this.#deploymentsContinueAfter
-						}) {
+            deployments(first: ${this.#deploymentsPageSize}, after: ${this.#deploymentsContinueAfter
+				}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -1052,9 +1045,8 @@ export class Repository {
                 name
             }
 
-            languages(first: ${this.#languagesPageSize}, after: ${
-							this.#languagesContinueAfter
-						}) {
+            languages(first: ${this.#languagesPageSize}, after: ${this.#languagesContinueAfter
+				}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -1105,14 +1097,13 @@ export class Repository {
 
 			return `
                 ${head} {
-                    ${
-											IS_SINGULAR
-												? `
+                    ${IS_SINGULAR
+					? `
                     ${info_body}
 
                     ${this.#issuesBody(issues_state)}
                     `
-												: `
+					: `
                     ${this.#count_nodes ? "totalCount" : ""}
                     
                     pageInfo {
@@ -1126,7 +1117,7 @@ export class Repository {
                         ${this.#issuesBody(issues_state)}
                     }
                     `
-										}
+				}
                 }`;
 		}
 
@@ -1145,16 +1136,14 @@ export class Repository {
 			const fetchClosed = state.includes(GITHUB_MILESTONE_ISSUE_STATES.CLOSED);
 
 			const open = `
-                open_issues: issues(first: ${
-									this.#issuesPageSize
-								}, states: [OPEN], after: ${this.#issuesContinueAfter}) {
+                open_issues: issues(first: ${this.#issuesPageSize
+				}, states: [OPEN], after: ${this.#issuesContinueAfter}) {
                     ${this.#issuesNodes()}
                 }`;
 
 			const closed = `
-                closed_issues: issues(first: ${
-									this.#issuesPageSize
-								}, states: [CLOSED], after: ${this.#issuesContinueAfter}) {
+                closed_issues: issues(first: ${this.#issuesPageSize
+				}, states: [CLOSED], after: ${this.#issuesContinueAfter}) {
                     ${this.#issuesNodes()}
                 }`;
 

@@ -5,7 +5,7 @@ export default defineConfig({
     out: "./next-drizzle",
     driver: "pg",
     dbCredentials: {
-        connectionString: process.env.DATABASE_NEXT_HOST!,
+        connectionString: process.env.DATABASE_NEXT_HOST ?? "http://localhost:5432"
     },
     verbose: true
 })

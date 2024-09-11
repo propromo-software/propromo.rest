@@ -30,15 +30,15 @@ export const app = new Elysia()
 	)
 	// add logger back in, if it is updated, to work with the current version of Elysia
 	/* .use(
-    logger({
-      level: 'error',
-      customProps(ctx: InferContext<typeof app>) {
-        return {
-          params: ctx.params,
-          query: ctx.query
-        };
-      }
-    })
+	logger({
+	  level: 'error',
+	  customProps(ctx: InferContext<typeof app>) {
+		return {
+		  params: ctx.params,
+		  query: ctx.query
+		};
+	  }
+	})
   ) */
 	.use(html())
 	.use(ROOT_ROUTES)
@@ -66,7 +66,6 @@ export const app = new Elysia()
 			),
 	)
 	.use(v1)
-
 	.listen(PORT);
 
 const currentDate = new Date();

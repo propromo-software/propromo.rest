@@ -37,9 +37,7 @@ export const Project = (
     ${head}
         title
 
-        ${
-					project_scopes.includes(GITHUB_PROJECT_SCOPES.INFO)
-						? `
+        ${project_scopes.includes(GITHUB_PROJECT_SCOPES.INFO) ? `
         shortDescription
         url
         public
@@ -47,16 +45,13 @@ export const Project = (
         updatedAt
         closedAt
         readme
-        `
-						: ""
-				}
+        ` : ""}
         
-        ${
-					project_scopes.includes(GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED) &&
-					repository_query
-						? repository_query
-						: ""
-				}
+        ${project_scopes.includes(GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED) &&
+			repository_query
+			? repository_query
+			: ""
+		}
 
         ${tail}
     }`;

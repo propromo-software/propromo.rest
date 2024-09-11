@@ -5,7 +5,7 @@ export default defineConfig({
     out: "./main-drizzle",
     driver: "pg",
     dbCredentials: {
-        connectionString: process.env.DATABASE_MAIN_HOST!
+        connectionString: process.env.DATABASE_MAIN_HOST ?? "http://localhost:5432"
     },
     verbose: true
 })

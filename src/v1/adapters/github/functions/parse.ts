@@ -65,7 +65,10 @@ export function isValidEnumArray(
  * @param {string | number} input - The input value to be converted.
  * @return {string | number} - The converted value.
  */
-export function maybeStringToNumber(input: string | number): string | number {
+export function maybeStringToNumber(
+	input: string | number | undefined,
+): string | number {
+	if (!input) return -1;
 	const maybeNumber = +input; // like Number() - if it is a number, give me a number, if it is not, give me NaN, parseInt() stops at the first non numeric value and returns the number => weird :)
 
 	if (!Number.isNaN(maybeNumber)) return maybeNumber;
