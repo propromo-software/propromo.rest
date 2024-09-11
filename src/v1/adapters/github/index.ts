@@ -32,7 +32,6 @@ import { OrganizationFetcher, Repository, UserFetcher } from "./scopes";
 import { parseScopes, maybeStringToNumber } from "./functions/parse";
 
 const log = createPinoLogger();
-// const GITHUB_PAT = process.env.GITHUB_PAT; // TODO: multiple tokens like this token;token;token... for key rotation for public repositories, if user didn't provide a token
 // TODO: write tests for all endpoints
 
 /* APP WEBHOOK */
