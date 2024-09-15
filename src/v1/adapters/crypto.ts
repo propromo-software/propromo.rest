@@ -1,4 +1,4 @@
-import { PAT_SALT as SALT } from "../../../../environment";
+import { PAT_SALT as SALT } from "../../environment";
 
 export async function encryptString(plaintext: string) {
 	const plaintextBuffer = new TextEncoder().encode(plaintext);

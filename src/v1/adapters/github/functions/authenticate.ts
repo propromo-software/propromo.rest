@@ -7,10 +7,11 @@ import bearer from "@elysiajs/bearer";
 import { fetchGithubDataUsingGraphql } from "./fetch";
 import type { RateLimit } from "@octokit/graphql-schema";
 import { GITHUB_QUOTA } from "../graphql";
-import { maybeStringToNumber } from "./parse";
+import { maybeStringToNumber } from "../../parse";
 import { DEV_MODE, JWT_SECRET } from "../../../../environment";
-import { MicroserviceError } from "../error";
-import { decryptString, encryptString } from "./crypto";
+import { MicroserviceError } from "../../error";
+import { decryptString, encryptString } from "../../crypto";
+import { checkForTokenPresence } from "../../authenticate";
 
 /* JWT */
 
@@ -28,31 +29,6 @@ export const GITHUB_JWT = new Elysia().use(
 			}) */
 	}),
 );
-
-/**
- * Check for the presence of a token and throw an error if it is missing.
- *
- * @param {string | undefined} token - The token to be checked
- * @param {Context["set"]} set - The set context
- * @param {string} errorMessage - The error message to be thrown if the token is missing
- * @return {string} The token as a string if it is present
- */
-export function checkForTokenPresence(
-	token: string | undefined,
-	set: Context["set"],
-	errorMessage = "Token is missing. Create one at https://github.com/settings/tokens.",
-): string {
-	if (!token || token.trim().length === 0) {
-		// Authorization: Bearer <token>
-		set.status = 400;
-		set.headers["WWW-Authenticate"] =
-			`Bearer realm='${GITHUB_JWT_REALM}', error="bearer_token_missing"`;
-
-		throw new MicroserviceError({ error: errorMessage, code: 400 });
-	}
-
-	return token as string;
-}
 
 /**
  * Check if the provided token is valid by fetching Github data using GraphQL.
@@ -124,7 +100,7 @@ export const RESOLVE_JWT = new Elysia()
 
 /* APP AND TOKEN AUTHENTICATION */
 
-export const GITHUB_APP_AUTHENTICATION = new Elysia({ prefix: "/auth" })
+export const GITHUB_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 	.use(bearer())
 	.use(GITHUB_JWT)
 	.post(

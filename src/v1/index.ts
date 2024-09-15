@@ -13,16 +13,23 @@ import {
 	GITHUB_ORGS,
 	GITHUB_USERS,
 } from "./adapters/github";
-import { GITHUB_APP_AUTHENTICATION } from "./adapters/github/functions/authenticate";
+import { GITHUB_AUTHENTICATION } from "./adapters/github/functions/authenticate";
+import { JIRA_AUTHENTICATION } from "./adapters/jira/functions/authenticate";
+import { JIRA_GENERAL } from "./adapters/jira";
 
 export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 	.group("/github", (app) =>
 		app
-			.use(GITHUB_APP_AUTHENTICATION)
+			.use(GITHUB_AUTHENTICATION)
 			.use(GITHUB_APP_WEBHOOKS)
 			.use(GITHUB_GENERAL)
 			.use(GITHUB_ORGS)
 			.use(GITHUB_USERS),
+	)
+	.group("/jira", (app) =>
+		app
+			.use(JIRA_AUTHENTICATION)
+			.use(JIRA_GENERAL)
 	)
 	.use(
 		swagger({
@@ -45,6 +52,10 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 					{
 						name: "github",
 						description: "Used for fetching info from the Github GraphQl API.",
+					},
+					{
+						name: "jira",
+						description: "Used for fetching info from the Jira GraphQl API.",
 					},
 					{
 						name: "authentication",

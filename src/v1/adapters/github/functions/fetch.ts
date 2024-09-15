@@ -15,7 +15,7 @@ import {
 import { GITHUB_API_HEADERS } from "../globals";
 import { getOctokitObject } from "./authenticate";
 import type { OctokitResponse } from "@octokit/types";
-import { MicroserviceError } from "../error";
+import { MicroserviceError } from "../../error";
 import { DEV_MODE, OPEN_SOURCE_PROGRAM_PATS } from "../../../../environment";
 
 /**

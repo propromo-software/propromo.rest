@@ -1,7 +1,8 @@
 import { Elysia } from "elysia";
-import { GITHUB_JWT, checkForTokenPresence } from "./functions/authenticate";
+import { GITHUB_JWT } from "./github/functions/authenticate";
 import bearer from "@elysiajs/bearer";
-import { DEV_MODE } from "../../../environment";
+import { DEV_MODE } from "../../environment";
+import { checkForTokenPresence } from "./authenticate";
 
 /* GUARDED ENDPOINTS */
 

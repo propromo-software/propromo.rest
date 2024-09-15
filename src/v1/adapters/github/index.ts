@@ -14,7 +14,7 @@ import {
 import { fetchGithubDataUsingGraphql, fetchRateLimit } from "./functions/fetch";
 import { createPinoLogger } from "@bogeychan/elysia-logger";
 import { RESOLVE_JWT } from "./functions/authenticate";
-import { guardEndpoints } from "./plugins";
+import { guardEndpoints } from "../plugins";
 import {
 	GITHUB_ACCOUNT_SCOPES,
 	GITHUB_MILESTONE_ISSUE_STATES,
@@ -29,7 +29,8 @@ import {
 	GITHUB_REPOSITORY_PARAMS,
 } from "./params";
 import { OrganizationFetcher, Repository, UserFetcher } from "./scopes";
-import { parseScopes, maybeStringToNumber } from "./functions/parse";
+import { parseScopes } from "./functions/parse";
+import { maybeStringToNumber } from "../parse";
 
 const log = createPinoLogger();
 // TODO: write tests for all endpoints
