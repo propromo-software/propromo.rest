@@ -2,7 +2,7 @@ import { Elysia } from "elysia"; // https://elysiajs.com/introduction.html
 import { cors } from "@elysiajs/cors"; // https://elysiajs.com/plugins/cors.html
 import { staticPlugin } from "@elysiajs/static"; // https://github.com/elysiajs/elysia-static
 import { html } from "@elysiajs/html"; // https://elysiajs.com/plugins/html.html
-import { /* type InferContext, */ logger } from "@bogeychan/elysia-logger"; // https://www.npmjs.com/package/@bogeychan/elysia-logger
+import { logger } from "@bogeychan/elysia-logger"; // https://www.npmjs.com/package/@bogeychan/elysia-logger
 
 import {
 	API_FORWARD_ROUTES,
@@ -28,18 +28,6 @@ export const app = new Elysia()
 			origin: CORS_ORIGINS,
 		}),
 	)
-	// add logger back in, if it is updated, to work with the current version of Elysia
-	/* .use(
-	logger({
-	  level: 'error',
-	  customProps(ctx: InferContext<typeof app>) {
-		return {
-		  params: ctx.params,
-		  query: ctx.query
-		};
-	  }
-	})
-  ) */
 	.use(html())
 	.use(ROOT_ROUTES)
 
@@ -47,14 +35,13 @@ export const app = new Elysia()
 	.use(API_FORWARD_ROUTES)
 	.group(SWAGGER_PATH, (app) =>
 		app // if no version is specified, redirect to the latest version
-			.get("", async ({ set }) => {
-				set.status = 308;
-				set.redirect = LATEST_SWAGGER_PATH;
+			.get("", async ({ redirect }) => {
+				return redirect(`/${LATEST_SWAGGER_PATH}`);
 			})
 			.get(
 				"/json",
-				async ({ set }) => {
-					set.redirect = `/${LATEST_SWAGGER_PATH}/json`;
+				async ({ redirect }) => {
+					return redirect(`/${LATEST_SWAGGER_PATH}/json`);
 				},
 				{
 					detail: {

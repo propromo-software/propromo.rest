@@ -114,8 +114,7 @@ for (const path of ROOT_PATHS) {
 }
 export const API_FORWARD_ROUTES = new Elysia({ prefix: "" });
 for (const path of API_PATHS) {
-	API_FORWARD_ROUTES.get(path, ({ set }) => {
-		set.status = 308;
-		set.redirect = `/${path}/${SWAGGER_PATH}`;
+	API_FORWARD_ROUTES.get(path, ({ redirect }) => {
+		return redirect(`/${path}/${SWAGGER_PATH}`);
 	});
 }
