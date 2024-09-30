@@ -6,14 +6,13 @@ import {
 	type PageSize,
 } from "./types";
 import { DEV_MODE } from "../../../environment";
+import { Fetcher, FetcherExtended } from "../scopes";
 
 // JS doesn't allow inheriting private (_<property/function>) properties and functions and protected ones (_<property/function>) have getters and setters per default, because they are just a convention and have to be implemented by the programmer :).
 // It is not possible to make private properties inheritable in JavaScript, as the private properties of a class are not inherited by its subclasses. This is because private properties are not part of the class's public interface, and they are not accessible from outside the class.
 // They are private, because only the fetching functions should be visible for code completion and because ít feels illegal to expose them, because they should only be set and used within the class.
 // biome-ignore lint/complexity/noStaticOnlyClass: Prettier like that, who needs speed, am I right?
-abstract class AccountFetcher {
-	static defaultPageSize = 10;
-
+abstract class AccountFetcher extends Fetcher {
 	static packages(
 		packagePageSize: number,
 		packagesContinueAfter: string | undefined | null,
@@ -85,13 +84,7 @@ abstract class AccountFetcher {
 	}
 }
 
-export class OrganizationFetcher {
-	#name: string;
-
-	get name() {
-		return this.#name;
-	}
-
+export class OrganizationFetcher extends FetcherExtended {
 	#doFetchEssential = true;
 	#doFetchInfo = false;
 	#doFetchPackages = false;
@@ -107,10 +100,9 @@ export class OrganizationFetcher {
 	#log = false;
 
 	constructor(name: string, scopes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
+		super(name);
 		this.#log = DEV_MODE;
 		this.#count_nodes = DEV_MODE;
-
-		this.#name = name;
 
 		this.#packagePageSize = AccountFetcher.defaultPageSize;
 		this.#projectPageSize = AccountFetcher.defaultPageSize;
@@ -173,7 +165,7 @@ export class OrganizationFetcher {
 			});
 
 		const query = `{
-            organization(login: "${this.#name}") {
+            organization(login: "${this.name}") {
                 login
                 ${this.#essentialBody()}
                 ${this.#infoBody()}
@@ -252,13 +244,7 @@ export class OrganizationFetcher {
 	}
 }
 
-export class UserFetcher {
-	#name: string;
-
-	get name() {
-		return this.#name;
-	}
-
+export class UserFetcher extends FetcherExtended {
 	#doFetchEssential = true;
 	#doFetchInfo = false;
 	#doFetchPackages = false;
@@ -274,10 +260,9 @@ export class UserFetcher {
 	#log = false;
 
 	constructor(name: string, scopes: PageSize<GITHUB_ACCOUNT_SCOPES>[]) {
+		super(name);
 		this.#log = DEV_MODE;
 		this.#count_nodes = DEV_MODE;
-
-		this.#name = name;
 
 		this.#packagePageSize = AccountFetcher.defaultPageSize;
 		this.#projectPageSize = AccountFetcher.defaultPageSize;
@@ -340,7 +325,7 @@ export class UserFetcher {
 			});
 
 		const query = `{
-            user(login: "${this.#name}") {
+            user(login: "${this.name}") {
                 login
                 ${this.#essentialBody()}
                 ${this.#infoBody()}
@@ -435,13 +420,7 @@ export class UserFetcher {
 	}
 }
 
-export class Repository {
-	#name: string | null = null;
-
-	get name() {
-		return this.#name;
-	}
-
+export class Repository extends FetcherExtended {
 	#doFetchEssential = true;
 	#doFetchInfo = false;
 	#doFetchLicense = false;
@@ -483,11 +462,9 @@ export class Repository {
 			| { name: string; scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] }
 			| { scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] },
 	) {
-		this.#log = DEV_MODE;
+		super(("name" in args) ? args.name : null);
 
-		if ("name" in args) {
-			this.#name = args.name;
-		}
+		this.#log = DEV_MODE;
 
 		this.#rootPageSize = Repository.defaultPageSize;
 		this.#vulnerabilitiesPageSize = Repository.defaultPageSize;
@@ -619,9 +596,9 @@ export class Repository {
 	}
 
 	#getInfoQuery() {
-		if (this.#name) {
+		if (this.name) {
 			return `
-                repository(name: "${this.#name}") {
+                repository(name: "${this.name}") {
                     ${this.#essentialBody()}
                     ${this.#infoBody()}
     
@@ -666,9 +643,9 @@ export class Repository {
 		milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
 		milestone_number: number | null = null,
 	) {
-		if (this.#name) {
+		if (this.name) {
 			return `
-                repository(name: "${this.#name}") {
+                repository(name: "${this.name}") {
                     ${this.#essentialBody()}
                     ${this.#infoBody()}
     

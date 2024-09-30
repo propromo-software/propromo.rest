@@ -16,15 +16,15 @@
   "dependencies": {
     "@apollo/client": "^3.11.8",
     "@bogeychan/elysia-logger": "^0.0.20",
-    "@elysiajs/bearer": "^1.0.2",
+    "@elysiajs/bearer": "^1.1.2",
     "@elysiajs/cors": "^1.0.2",
     "@elysiajs/html": "^1.0.2",
-    "@elysiajs/jwt": "^1.0.2",
+    "@elysiajs/jwt": "^1.1.1",
     "@elysiajs/static": "^1.0.2",
     "@elysiajs/swagger": "^1.0.2",
     "@octokit/graphql-schema": "^14.47.1",
     "drizzle-orm": "^0.30.9",
-    "elysia": "^1.0.9",
+    "elysia": "^1.1.16",
     "graphql": "^16.9.0",
     "octokit": "^3.1.2",
     "pg": "^8.11.5"

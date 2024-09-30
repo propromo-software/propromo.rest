@@ -1,6 +1,6 @@
 import { ApolloClient, InMemoryCache, gql, HttpLink } from '@apollo/client/core'; // https://github.com/apollographql/apollo-client/issues/11351
 import { setContext } from '@apollo/client/link/context';
-import { Context } from 'elysia';
+import type { Context } from 'elysia';
 import { MicroserviceError } from './error';
 import { DEV_MODE } from '../../environment';
 

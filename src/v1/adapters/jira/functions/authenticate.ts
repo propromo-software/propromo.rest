@@ -5,7 +5,7 @@ import { DEV_MODE, JWT_SECRET } from "../../../../environment";
 import { MicroserviceError } from "../../error";
 import { decryptString, encryptString } from "../../crypto";
 import { checkForTokenPresence } from "../../authenticate";
-import { JIRA_CLOUD_ID } from "../graphql";
+import { JIRA_CLOUD_ID } from "../scopes";
 import { fetchGraphqlEndpointUsingBasicAuth } from "../../fetch";
 import { JIRA_AUTHENTICATION_STRATEGY_OPTIONS, tenantContexts } from "../types";
 
@@ -97,9 +97,9 @@ export const JIRA_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 	.post(
 		"/basic",
 		async ({ propromoRestAdaptersJira, bearer, set }) => {
-			const auth = bearer; // bearer is checked beforeHandle
+			const auth = bearer as string; // bearer is checked beforeHandle
 
-			const token = await encryptString(auth as string);
+			const token = await encryptString(auth);
 			if (DEV_MODE) console.log("encryptedToken", token);
 
 			const bearerToken = await propromoRestAdaptersJira.sign({
