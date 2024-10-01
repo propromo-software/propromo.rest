@@ -13,7 +13,7 @@ export function checkForTokenPresence(
 	token: string | undefined,
 	set: Context["set"],
 	jwtRealm: "propromoRestAdaptersGithub" | "propromoRestAdaptersJira" = "propromoRestAdaptersGithub",
-	errorMessage = "Token is missing. Create one at https://github.com/settings/tokens.",
+	errorMessage: string = "Token is missing. Create one at https://github.com/settings/tokens.",
 ): string {
 	if (!token || token.trim().length === 0) {
 		// Authorization: Bearer <token>

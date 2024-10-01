@@ -1,6 +1,12 @@
 import { PAT_SALT as SALT } from "../../environment";
 
-export async function encryptString(plaintext: string) {
+/**
+ * Encrypts a string using a password derived key.
+ *
+ * @param {string} plaintext - The string to encrypt.
+ * @returns {Promise<string>} - The encrypted string.
+ */
+export async function encryptString(plaintext: string): Promise<string> {
 	const plaintextBuffer = new TextEncoder().encode(plaintext);
 
 	const passwordKey = await crypto.subtle.importKey(
@@ -37,16 +43,22 @@ export async function encryptString(plaintext: string) {
 
 	const encryptedString = btoa(
 		String.fromCharCode.apply(null, Array.from(new Uint8Array(iv))) +
-			String.fromCharCode.apply(
-				null,
-				Array.from(new Uint8Array(encryptedBuffer)),
-			),
+		String.fromCharCode.apply(
+			null,
+			Array.from(new Uint8Array(encryptedBuffer)),
+		),
 	);
 
 	return encryptedString;
 }
 
-export async function decryptString(encryptedString: string) {
+/**
+ * Decrypts an encrypted string using a password derived key.
+ *
+ * @param {string} encryptedString - The encrypted string to decrypt.
+ * @returns {Promise<string>} - The decrypted string.
+ */
+export async function decryptString(encryptedString: string): Promise<string> {
 	console.log("encryptedString", encryptedString);
 
 	const encryptedBuffer = Uint8Array.from(atob(encryptedString), (c) =>
@@ -54,7 +66,7 @@ export async function decryptString(encryptedString: string) {
 	);
 
 	const iv = encryptedBuffer.slice(0, 12);
-	const ciphertext = encryptedBuffer.slice(12);
+	const cipherText = encryptedBuffer.slice(12);
 
 	const passwordKey = await crypto.subtle.importKey(
 		"raw",
@@ -83,7 +95,7 @@ export async function decryptString(encryptedString: string) {
 			iv: iv,
 		},
 		key,
-		ciphertext,
+		cipherText,
 	);
 
 	const decryptedString = new TextDecoder().decode(decryptedBuffer);
