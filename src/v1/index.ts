@@ -33,7 +33,8 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 	)
 	.use(
 		swagger({
-			scalarVersion: "1.25.24",
+			/* 1.25.25 */
+			scalarVersion: "1.17.16",
 			path: SWAGGER_PATH,
 			exclude: [
 				...ROOT_PATHS,
@@ -75,6 +76,9 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 						alt: "favicon",
 					},
 				},
+				/* authentication: {
+					preferredSecurityScheme: "BearerAuth",
+				} */
 			},
 		}),
-    );
+	);

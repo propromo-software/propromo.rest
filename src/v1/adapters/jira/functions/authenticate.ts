@@ -134,6 +134,11 @@ export const JIRA_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 			detail: {
 				description: "Authenticate using a Jira Email:API-Token (basic authentication).",
 				tags: ["jira", "authentication"],
+				/* security: [
+					{
+						BearerAuth: []
+					}
+				] */
 			},
 		},
 	);
