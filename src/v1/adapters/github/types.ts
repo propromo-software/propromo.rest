@@ -36,7 +36,7 @@ export interface RestResponse<T> {
 	type?: string | undefined;
 }
 
-export interface GraphqlResponse<T> extends RestResponse<T> { }
+export interface GraphqlResponse<T> extends RestResponse<T> {}
 
 // in type GraphQlQueryResponse<ResponseData> of @octokit/graphql (has string as type...)
 export enum GraphqlResponseErrorCode {

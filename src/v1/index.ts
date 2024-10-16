@@ -26,11 +26,7 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 			.use(GITHUB_ORGS)
 			.use(GITHUB_USERS),
 	)
-	.group("/jira", (app) =>
-		app
-			.use(JIRA_AUTHENTICATION)
-			.use(JIRA_GENERAL)
-	)
+	.group("/jira", (app) => app.use(JIRA_AUTHENTICATION).use(JIRA_GENERAL))
 	.use(
 		swagger({
 			/* 1.25.25 */
@@ -76,7 +72,15 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 						alt: "favicon",
 					},
 				},
-				/* authentication: {
+				/* components: {
+					securitySchemes: {
+						BearerAuth: {
+							type: "http",
+							scheme: "bearer"
+						},
+					},
+				},
+				authentication: {
 					preferredSecurityScheme: "BearerAuth",
 				} */
 			},

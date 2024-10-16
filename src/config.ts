@@ -56,13 +56,13 @@ export const HOME_URLS = {
 } as const;
 
 // CORS settings for development and production servers
-export const CORS_ORIGINS = DEV_MODE ? [
-	"http://localhost:5000"
-] : [
-	HOME_URLS.website.url,
-	"https://propromo-d08144c627d3.herokuapp.com",
-	"https://propromo-ts.vercel.app",
-];
+export const CORS_ORIGINS = DEV_MODE
+	? ["http://localhost:5000"]
+	: [
+		HOME_URLS.website.url,
+		"https://propromo-d08144c627d3.herokuapp.com",
+		"https://propromo-ts.vercel.app",
+	];
 
 // Home Page
 export const ROOT = `

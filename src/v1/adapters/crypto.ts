@@ -43,10 +43,10 @@ export async function encryptString(plaintext: string): Promise<string> {
 
 	const encryptedString = btoa(
 		String.fromCharCode.apply(null, Array.from(new Uint8Array(iv))) +
-		String.fromCharCode.apply(
-			null,
-			Array.from(new Uint8Array(encryptedBuffer)),
-		),
+			String.fromCharCode.apply(
+				null,
+				Array.from(new Uint8Array(encryptedBuffer)),
+			),
 	);
 
 	return encryptedString;

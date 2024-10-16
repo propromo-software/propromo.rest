@@ -36,7 +36,9 @@ export async function checkIfTokenIsValid(
 	auth: { user: string; secret: string },
 	set: Context["set"],
 ): Promise<boolean> {
-	const response = await fetchGraphqlEndpointUsingBasicAuth<{ tenantContexts?: { cloudId?: string } | null }>(JIRA_CLOUD_ID([host]), host, auth, set);
+	const response = await fetchGraphqlEndpointUsingBasicAuth<{
+		tenantContexts?: { cloudId?: string } | null;
+	}>(JIRA_CLOUD_ID([host]), host, auth, set);
 
 	if (response?.data?.tenantContexts === null) {
 		set.status = 401;
@@ -60,7 +62,12 @@ export const RESOLVE_JWT = new Elysia()
 		{ as: "scoped" },
 		async ({ propromoRestAdaptersJira, headers: { authorization }, set }) => {
 			const bearer = authorization?.split(" ")[1];
-			const token = checkForTokenPresence(bearer, set, JIRA_JWT_REALM, "Token is missing. Create one at https://id.atlassian.com/manage-profile/security/api-tokens.");
+			const token = checkForTokenPresence(
+				bearer,
+				set,
+				JIRA_JWT_REALM,
+				"Token is missing. Create one at https://id.atlassian.com/manage-profile/security/api-tokens.",
+			);
 
 			const jwt = await propromoRestAdaptersJira.verify(token);
 			if (DEV_MODE) console.log(jwt);
@@ -114,25 +121,43 @@ export const JIRA_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 			const host = tokenParts[0];
 			const user = tokenAuth[0];
 			const secret = tokenAuth[1];
-			const jiraCloudContext = await fetchGraphqlEndpointUsingBasicAuth<tenantContexts>(JIRA_CLOUD_ID([host]), host, { user: user, secret: secret }, set);
+			const jiraCloudContext =
+				await fetchGraphqlEndpointUsingBasicAuth<tenantContexts>(
+					JIRA_CLOUD_ID([host]),
+					host,
+					{ user: user, secret: secret },
+					set,
+				);
 
 			return {
 				bearer: bearerToken,
 				context: {
-					cloudId: jiraCloudContext?.data?.tenantContexts ? jiraCloudContext?.data?.tenantContexts[0]?.cloudId : -1,
-				}
+					cloudId: jiraCloudContext?.data?.tenantContexts
+						? jiraCloudContext?.data?.tenantContexts[0]?.cloudId
+						: -1,
+				},
 			};
 		},
 		{
 			async beforeHandle({ bearer, set }) {
-				const token = checkForTokenPresence(bearer, set, JIRA_JWT_REALM, "Token is missing. Create one at https://id.atlassian.com/manage-profile/security/api-tokens.");
+				const token = checkForTokenPresence(
+					bearer,
+					set,
+					JIRA_JWT_REALM,
+					"Token is missing. Create one at https://id.atlassian.com/manage-profile/security/api-tokens.",
+				);
 				const tokenParts = token.split(" ");
 				const tokenAuth = tokenParts[1].split(":");
-				const valid = await checkIfTokenIsValid(tokenParts[0], { user: tokenAuth[0], secret: tokenAuth[1] }, set);
+				const valid = await checkIfTokenIsValid(
+					tokenParts[0],
+					{ user: tokenAuth[0], secret: tokenAuth[1] },
+					set,
+				);
 				if (DEV_MODE) console.log("decryptedToken:", token, "| valid:", valid);
 			},
 			detail: {
-				description: "Authenticate using a Jira Email:API-Token (basic authentication).",
+				description:
+					"Authenticate using a Jira Email:API-Token (basic authentication).",
 				tags: ["jira", "authentication"],
 				/* security: [
 					{

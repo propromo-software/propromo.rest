@@ -12,7 +12,9 @@ import { MicroserviceError } from "./error";
 export function checkForTokenPresence(
 	token: string | undefined,
 	set: Context["set"],
-	jwtRealm: "propromoRestAdaptersGithub" | "propromoRestAdaptersJira" = "propromoRestAdaptersGithub",
+	jwtRealm:
+		| "propromoRestAdaptersGithub"
+		| "propromoRestAdaptersJira" = "propromoRestAdaptersGithub",
 	errorMessage: string = "Token is missing. Create one at https://github.com/settings/tokens.",
 ): string {
 	if (!token || token.trim().length === 0) {

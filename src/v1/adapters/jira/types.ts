@@ -1,5 +1,5 @@
 export enum JIRA_AUTHENTICATION_STRATEGY_OPTIONS {
-    BASIC = "BASIC",
+	BASIC = "BASIC",
 }
 
-export type tenantContexts = { tenantContexts?: [{ cloudId?: string }] | null }
+export type tenantContexts = { tenantContexts?: [{ cloudId?: string }] | null };
