@@ -11,7 +11,6 @@ import { Fetcher, FetcherExtended } from "../scopes";
 // JS doesn't allow inheriting private (_<property/function>) properties and functions and protected ones (_<property/function>) have getters and setters per default, because they are just a convention and have to be implemented by the programmer :).
 // It is not possible to make private properties inheritable in JavaScript, as the private properties of a class are not inherited by its subclasses. This is because private properties are not part of the class's public interface, and they are not accessible from outside the class.
 // They are private, because only the fetching functions should be visible for code completion and because ít feels illegal to expose them, because they should only be set and used within the class.
-// biome-ignore lint/complexity/noStaticOnlyClass: Prettier like that, who needs speed, am I right?
 abstract class AccountFetcher extends Fetcher {
 	static packages(
 		packagePageSize: number,
@@ -371,31 +370,7 @@ export class UserFetcher extends FetcherExtended {
 		if (this.#doFetchInfo) {
 			if (this.#log) console.info("fetching info");
 
-			return `
-            bio
-            websiteUrl
-            createdAt
-
-            status {
-                message
-                emoji
-                indicatesLimitedAvailability
-            }
-            socialAccounts(first: 10) {
-                ${this.#count_nodes ? "totalCount" : ""}
-
-                pageInfo {
-                    endCursor
-                    hasNextPage
-                }
-
-                nodes {
-                    provider
-                    displayName
-                    url
-                }
-            }
-            `;
+			return UserBodyInfo(this.#count_nodes);
 		}
 
 		return "";
@@ -405,19 +380,51 @@ export class UserFetcher extends FetcherExtended {
 		if (this.#doFetchEssential) {
 			if (this.#log) console.info("fetching essential");
 
-			return `
-            name
-            pronouns
-            location
-            avatarUrl
-            url
-            company
-            email
-            `;
+			return UserBodyEssential();
 		}
 
 		return "";
 	}
+}
+
+function UserBodyEssential() {
+	return `
+	name
+	pronouns
+	location
+	avatarUrl
+	url
+	company
+	email
+	`;
+}
+
+function UserBodyInfo(count_nodes = false) {
+	return `
+	bio
+	websiteUrl
+	createdAt
+
+	status {
+		message
+		emoji
+		indicatesLimitedAvailability
+	}
+	socialAccounts(first: 10) {
+		${count_nodes ? "totalCount" : ""}
+
+		pageInfo {
+			endCursor
+			hasNextPage
+		}
+
+		nodes {
+			provider
+			displayName
+			url
+		}
+	}
+	`;
 }
 
 export class Repository extends FetcherExtended {
@@ -432,6 +439,7 @@ export class Repository extends FetcherExtended {
 	#doFetchLanguages = false;
 	#doFetchMilestones = false;
 	#doFetchIssues = false;
+	#doFetchCollaborators = false;
 
 	static defaultPageSize = 10;
 	#rootPageSize: number;
@@ -443,6 +451,7 @@ export class Repository extends FetcherExtended {
 	#languagesPageSize: number;
 	#milestonesPageSize: number;
 	#issuesPageSize: number;
+	#collaboratorsPageSize: number;
 
 	#rootContinueAfter: string | undefined | null = null;
 	#vulnerabilitiesContinueAfter: string | undefined | null = null;
@@ -453,6 +462,7 @@ export class Repository extends FetcherExtended {
 	#languagesContinueAfter: string | undefined | null = null;
 	#milestonesContinueAfter: string | undefined | null = null;
 	#issuesContinueAfter: string | undefined | null = null;
+	#collaboratorsContinueAfter: string | undefined | null = null;
 
 	#count_nodes = false;
 	#log = false;
@@ -475,6 +485,7 @@ export class Repository extends FetcherExtended {
 		this.#languagesPageSize = Repository.defaultPageSize;
 		this.#milestonesPageSize = Repository.defaultPageSize;
 		this.#issuesPageSize = Repository.defaultPageSize;
+		this.#collaboratorsPageSize = Repository.defaultPageSize;
 
 		this.#parseScopes(args.scopes);
 	}
@@ -551,6 +562,11 @@ export class Repository extends FetcherExtended {
 					this.#rootPageSize = ps.pageSize ?? this.#rootPageSize;
 					this.#rootContinueAfter = this.#validateCursor(ps.continueAfter);
 					break;
+				case GITHUB_REPOSITORY_SCOPES.COLLABORATORS:
+					this.#doFetchCollaborators = true;
+					this.#collaboratorsPageSize = ps.pageSize ?? this.#collaboratorsPageSize;
+					this.#collaboratorsContinueAfter = this.#validateCursor(ps.continueAfter);
+					break;
 				default:
 					break;
 			}
@@ -609,6 +625,7 @@ export class Repository extends FetcherExtended {
                     ${this.#releasesBody()}
                     ${this.#deploymentsBody()}
                     ${this.#languagesBody()}
+					${this.#collaboratorsBody()} 
                 }
             `;
 		}
@@ -634,6 +651,7 @@ export class Repository extends FetcherExtended {
                 ${this.#releasesBody()}
                 ${this.#deploymentsBody()}
                 ${this.#languagesBody()}
+				${this.#collaboratorsBody()} 
             }
         }`;
 	}
@@ -1172,6 +1190,29 @@ export class Repository extends FetcherExtended {
                         }
                     }
                 }`;
+		}
+
+		return "";
+	}
+
+	#collaboratorsBody() {
+		if (this.#doFetchCollaborators) {
+			if (this.#log) console.info("fetching collaborators");
+
+			return `
+			collaborators(affiliation: ALL, first: ${this.#collaboratorsPageSize}, after: ${this.#collaboratorsContinueAfter}) {
+				${this.#count_nodes ? "totalCount" : ""}
+
+				pageInfo {
+					endCursor
+					hasNextPage
+				}
+
+				nodes {
+					${UserBodyEssential()}
+				}
+			}
+			`;
 		}
 
 		return "";

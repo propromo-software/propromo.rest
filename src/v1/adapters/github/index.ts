@@ -969,6 +969,55 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																tags: ["github"],
 															},
 														},
+													)
+													.get(
+														"/collaborators",
+														async ({
+															fetchParams,
+															params: { login_name, project_id_or_name },
+															query,
+															set,
+														}) => {
+															const response =
+																await fetchGithubDataUsingGraphql<{
+																	project: ProjectV2;
+																}>(
+																	AccountScopeEntryRoot(
+																		login_name,
+																		getAllRepositoriesInProject(
+																			project_id_or_name,
+																			[
+																				GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED,
+																			],
+																			[
+																				{
+																					scopeName: "collaborators",
+																					pageSize: query.pageSize ?? 1,
+																					continueAfter: query.continueAfter,
+																				},
+																				{
+																					scopeName: "count",
+																					pageSize: query.rootPageSize ?? 1,
+																					continueAfter:
+																						query.rootContinueAfter,
+																				},
+																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
+																		),
+																		login_type,
+																	),
+																	fetchParams.auth,
+																	set,
+																	fetchParams.auth_type,
+																);
+
+															return response;
+														},
+														{
+															detail: {
+																description: `Request repository collaborators in the ${login_type} project. (Your token has to have push permission in the repositories.)`,
+																tags: ["github"],
+															},
+														},
 													),
 										)
 
@@ -1167,7 +1216,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																						[
 																							{
 																								scopeName: "milestones", // fetches a single milestone, because amount is set to singular
-																								pageSize: null ?? 1,
+																								pageSize: 1,
 																								continueAfter: null,
 																							},
 																							{
