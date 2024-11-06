@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { guardEndpoints } from "../plugins";
 import { RESOLVE_JWT } from "./functions/authenticate";
 import { fetchGraphqlEndpointUsingBasicAuth } from "../fetch";
+import { validateBasicAuthenticationInput } from "./functions/validate";
 import { JIRA_CLOUD_PROJECTS } from "./scopes";
 import type { tenantContexts } from "./types";
 
@@ -15,17 +16,15 @@ export const JIRA_GENERAL = new Elysia({ prefix: "/info" }).use(
 		new Elysia().group("cloud", (app) =>
 			app.use(RESOLVE_JWT).group("/:cloud_id", (app) =>
 				app.get(
-					"/projects",
+					"/projects/software",
 					async ({ params, fetchParams, set }) => {
-						const tokenParts = fetchParams.auth.split(" ");
-						const host = tokenParts[0];
-						const tokenAuth = tokenParts[1].split(":");
-						const auth = { user: tokenAuth[0], secret: tokenAuth[1] };
+						const { host, user, secret } = validateBasicAuthenticationInput(fetchParams.auth);
+
 						const response =
 							await fetchGraphqlEndpointUsingBasicAuth<tenantContexts>(
 								JIRA_CLOUD_PROJECTS(params.cloud_id, { types: ["Software"] }),
 								host,
-								auth,
+								{ user, secret },
 								set,
 							);
 

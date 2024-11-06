@@ -49,7 +49,7 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 					title: "Propromo RestAPI Documentation",
 					description:
 						"A RestAPI for the scopes of the Github GraphqlAPI, that Propromo needs (latest).",
-					version: "1.0.12",
+					version: "1.1.0",
 				},
 				tags: [
 					{

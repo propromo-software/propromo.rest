@@ -8,6 +8,7 @@ import { checkForTokenPresence } from "../../authenticate";
 import { JIRA_CLOUD_ID } from "../scopes";
 import { fetchGraphqlEndpointUsingBasicAuth } from "../../fetch";
 import { JIRA_AUTHENTICATION_STRATEGY_OPTIONS, tenantContexts } from "../types";
+import { validateBasicAuthenticationInput } from "./validate";
 
 /* JWT */
 
@@ -116,11 +117,7 @@ export const JIRA_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 				/* exp: Math.floor(Date.now() / 1000) + (10 * 60) */
 			});
 
-			const tokenParts = auth.split(" ");
-			const tokenAuth = tokenParts[1].split(":");
-			const host = tokenParts[0];
-			const user = tokenAuth[0];
-			const secret = tokenAuth[1];
+			const { host, user, secret } = validateBasicAuthenticationInput(auth);
 			const jiraCloudContext =
 				await fetchGraphqlEndpointUsingBasicAuth<tenantContexts>(
 					JIRA_CLOUD_ID([host]),
@@ -160,11 +157,10 @@ export const JIRA_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 					});
 				}
 
-				const tokenParts = token.split(" ");
-				const tokenAuth = tokenParts[1].split(":");
+				const { host, user, secret } = validateBasicAuthenticationInput(token);
 				const valid = await checkIfTokenIsValid(
-					tokenParts[0],
-					{ user: tokenAuth[0], secret: tokenAuth[1] },
+					host,
+					{ user, secret },
 					set,
 				);
 				if (DEV_MODE) console.log("decryptedToken:", token, "| valid:", valid);
