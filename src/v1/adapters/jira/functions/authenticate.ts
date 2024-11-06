@@ -146,6 +146,20 @@ export const JIRA_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 					JIRA_JWT_REALM,
 					"Token is missing. Create one at https://id.atlassian.com/manage-profile/security/api-tokens.",
 				);
+
+				// [<Host> <E-Mail>:<API-Token>]
+				const format = /^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\s+[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}:[A-Za-z0-9-=_]+$/;
+				const isValidFormat = format.test(token);
+
+				if (!isValidFormat) {
+					set.status = 400;
+
+					throw new MicroserviceError({
+						error: "The authentication format is not valid. The easiest way to authenticate with Jira's REST-API is, with basic authentication. The format you have to provide us is the following: [<Host> <E-Mail>:<API-Token>].",
+						code: 400,
+					});
+				}
+
 				const tokenParts = token.split(" ");
 				const tokenAuth = tokenParts[1].split(":");
 				const valid = await checkIfTokenIsValid(
@@ -157,13 +171,8 @@ export const JIRA_AUTHENTICATION = new Elysia({ prefix: "/auth" })
 			},
 			detail: {
 				description:
-					"Authenticate using a Jira Email:API-Token (basic authentication).",
+					"Authenticate using your Jira Host, E-Mail and API-Token [<Host> <E-Mail>:<API-Token>]. (basic authentication).",
 				tags: ["jira", "authentication"],
-				/* security: [
-					{
-						BearerAuth: []
-					}
-				] */
 			},
 		},
 	);
