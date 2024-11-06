@@ -25,12 +25,18 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 			.use(GITHUB_GENERAL)
 			.use(GITHUB_ORGS)
 			.use(GITHUB_USERS),
+
+		// Set default in endpoints: 
+		/* {
+			detail: { security: [{ BearerAuth: [] }] }
+		} */
 	)
 	.group("/jira", (app) => app.use(JIRA_AUTHENTICATION).use(JIRA_GENERAL))
 	.use(
 		swagger({
-			/* 1.25.25 */
-			scalarVersion: "1.17.16",
+			/* Stable: 1.17.16 */
+			/* Modern UI: 1.25.25 */
+			scalarVersion: "1.25.58",
 			path: SWAGGER_PATH,
 			exclude: [
 				...ROOT_PATHS,
@@ -43,7 +49,7 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 					title: "Propromo RestAPI Documentation",
 					description:
 						"A RestAPI for the scopes of the Github GraphqlAPI, that Propromo needs (latest).",
-					version: "1.0.11",
+					version: "1.0.12",
 				},
 				tags: [
 					{
@@ -60,6 +66,15 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 							"Authenticate here first, to send requests to protected endpoints.",
 					},
 				],
+				components: {
+					securitySchemes: {
+						BearerAuth: {
+							type: 'http',
+							scheme: 'bearer',
+							bearerFormat: 'JWT',
+						},
+					},
+				},
 			},
 			scalarConfig: {
 				metaData: {
@@ -72,17 +87,9 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 						alt: "favicon",
 					},
 				},
-				/* components: {
-					securitySchemes: {
-						BearerAuth: {
-							type: "http",
-							scheme: "bearer"
-						},
-					},
-				},
 				authentication: {
-					preferredSecurityScheme: "BearerAuth",
-				} */
+					preferredSecurityScheme: 'BearerAuth',
+				},
 			},
 		}),
 	);
