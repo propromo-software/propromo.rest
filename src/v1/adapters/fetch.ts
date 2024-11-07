@@ -25,10 +25,11 @@ export async function fetchGraphqlEndpointUsingBasicAuth<T>(
 	{ user, secret }: { user: string; secret: string },
 	set: Context["set"],
 ) {
-	if (DEV_MODE)
+	if (DEV_MODE) {
 		console.log(
 			`Fetching data from the GraphQL endpoint '${endpoint}' using Basic Authentication {${user}:${secret}}...`,
 		);
+	}
 
 	const authLink = setContext((_, { headers }) => {
 		const base64Token = Buffer.from(`${user}:${secret}`).toString("base64");

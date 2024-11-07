@@ -10,6 +10,48 @@ import type { tenantContexts } from "./types";
 
 /**
  * Used for fetching info from the Jira GraphQl API. (quota and other general infos)
+ * 
+ * **Example Response** for the `allJiraProjects` query:
+ * ```
+ * {
+ * "data": {
+ *	  "__typename": "JiraQuery",
+ *	  "jira": {
+ *	    "allJiraProjects": {
+ *	  	"__typename": "JiraProjectConnection",
+ *	  	"pageInfo": {
+ *	  	  "__typename": "PageInfo",
+ *	  	  "hasNextPage": false
+ *	  	},
+ *	  	"edges": [
+ *	  	  {
+ *	  		"__typename": "JiraProjectEdge",
+ *	  		"node": {
+ *	  		  "__typename": "JiraProject",
+ *	  		  "id": "ari:cloud:jira:fa25cc28-217d-448e-aa38-ebe727051ae1:project/10000",
+ *	  		  "key": "SCRUM",
+ *	  		  "name": "SCRUM",
+ *	  		  "description": "",
+ *	  		  "avatar": {
+ *	  			"__typename": "JiraAvatar",
+ *	  			"large": "https://propromo.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/10416"
+ *	  		  },
+ *	  		  "webUrl": "https://propromo.atlassian.net/browse/SCRUM",
+ *	  		  "status": "ACTIVE",
+ *	  		  "created": "2024-11-06T23:57:50.781255Z",
+ *	  		  "lastUpdated": "2024-11-07T00:46:29.237Z",
+ *	  		  "projectType": "SOFTWARE",
+ *	  		  "projectTypeName": "Software project"
+ *	  		}
+ *	  	  }
+ *	  	]
+ *	    }
+ *	  }
+ * },
+ * "loading": false,
+ * "networkStatus": 7
+ * }
+ * ```
  */
 export const JIRA_GENERAL = new Elysia({ prefix: "/info" }).use(
 	guardEndpoints(
