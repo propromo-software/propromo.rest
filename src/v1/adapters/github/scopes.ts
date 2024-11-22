@@ -440,18 +440,20 @@ export class Repository extends FetcherExtended {
 	#doFetchMilestones = false;
 	#doFetchIssues = false;
 	#doFetchCollaborators = false;
+	#doFetchContributions = false;
 
 	static defaultPageSize = 10;
-	#rootPageSize: number;
-	#vulnerabilitiesPageSize: number;
-	#topicsPageSize: number;
-	#labelsPageSize: number;
-	#releasesPageSize: number;
-	#deploymentsPageSize: number;
-	#languagesPageSize: number;
-	#milestonesPageSize: number;
-	#issuesPageSize: number;
-	#collaboratorsPageSize: number;
+	#rootPageSize: number = Repository.defaultPageSize;
+	#vulnerabilitiesPageSize: number = Repository.defaultPageSize;
+	#topicsPageSize: number = Repository.defaultPageSize;
+	#labelsPageSize: number = Repository.defaultPageSize;
+	#releasesPageSize: number = Repository.defaultPageSize;
+	#deploymentsPageSize: number = Repository.defaultPageSize;
+	#languagesPageSize: number = Repository.defaultPageSize;
+	#milestonesPageSize: number = Repository.defaultPageSize;
+	#issuesPageSize: number = Repository.defaultPageSize;
+	#collaboratorsPageSize: number = Repository.defaultPageSize;
+	#contributionsPageSize: number = Repository.defaultPageSize;
 
 	#rootContinueAfter: string | undefined | null = null;
 	#vulnerabilitiesContinueAfter: string | undefined | null = null;
@@ -463,6 +465,7 @@ export class Repository extends FetcherExtended {
 	#milestonesContinueAfter: string | undefined | null = null;
 	#issuesContinueAfter: string | undefined | null = null;
 	#collaboratorsContinueAfter: string | undefined | null = null;
+	#contributionsContinueAfter: string | undefined | null = null;
 
 	#count_nodes = false;
 	#log = false;
@@ -474,18 +477,7 @@ export class Repository extends FetcherExtended {
 	) {
 		super(("name" in args) ? args.name : null);
 
-		this.#log = DEV_MODE;
-
-		this.#rootPageSize = Repository.defaultPageSize;
-		this.#vulnerabilitiesPageSize = Repository.defaultPageSize;
-		this.#topicsPageSize = Repository.defaultPageSize;
-		this.#labelsPageSize = Repository.defaultPageSize;
-		this.#releasesPageSize = Repository.defaultPageSize;
-		this.#deploymentsPageSize = Repository.defaultPageSize;
-		this.#languagesPageSize = Repository.defaultPageSize;
-		this.#milestonesPageSize = Repository.defaultPageSize;
-		this.#issuesPageSize = Repository.defaultPageSize;
-		this.#collaboratorsPageSize = Repository.defaultPageSize;
+		this.#log = DEV_MODE
 
 		this.#parseScopes(args.scopes);
 	}
@@ -567,6 +559,10 @@ export class Repository extends FetcherExtended {
 					this.#collaboratorsPageSize = ps.pageSize ?? this.#collaboratorsPageSize;
 					this.#collaboratorsContinueAfter = this.#validateCursor(ps.continueAfter);
 					break;
+				case GITHUB_REPOSITORY_SCOPES.CONTRIBUTIONS:
+					this.#doFetchContributions = true;
+					this.#contributionsPageSize = ps.pageSize ?? this.#contributionsPageSize;
+					this.#contributionsContinueAfter = this.#validateCursor(ps.continueAfter);
 				default:
 					break;
 			}
@@ -625,7 +621,8 @@ export class Repository extends FetcherExtended {
                     ${this.#releasesBody()}
                     ${this.#deploymentsBody()}
                     ${this.#languagesBody()}
-					${this.#collaboratorsBody()} 
+					${this.#collaboratorsBody()}
+					${this.#contributionsBody()}
                 }
             `;
 		}
@@ -651,7 +648,8 @@ export class Repository extends FetcherExtended {
                 ${this.#releasesBody()}
                 ${this.#deploymentsBody()}
                 ${this.#languagesBody()}
-				${this.#collaboratorsBody()} 
+				${this.#collaboratorsBody()}
+				${this.#contributionsBody()}
             }
         }`;
 	}
@@ -678,8 +676,10 @@ export class Repository extends FetcherExtended {
                     ${this.#milestonesBody(
 				issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
 				milestones_amount,
-				milestone_number,
-			)}
+				milestone_number)}
+
+					${this.#collaboratorsBody()}
+					${this.#contributionsBody()}
                 }
             `;
 		}
@@ -709,8 +709,10 @@ export class Repository extends FetcherExtended {
                 ${this.#milestonesBody(
 				issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
 				milestones_amount,
-				milestone_number,
-			)}
+				milestone_number)}
+
+				${this.#collaboratorsBody()}
+				${this.#contributionsBody()}
             }
         }`;
 	}
@@ -886,8 +888,7 @@ export class Repository extends FetcherExtended {
 			if (this.#log) console.info("fetching releases");
 
 			return `
-            releases(first: ${this.#releasesPageSize}, after: ${this.#releasesContinueAfter
-				}) {
+            releases(first: ${this.#releasesPageSize}, after: ${this.#releasesContinueAfter}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -951,8 +952,7 @@ export class Repository extends FetcherExtended {
 			if (this.#log) console.info("fetching deployments");
 
 			return `
-            deployments(first: ${this.#deploymentsPageSize}, after: ${this.#deploymentsContinueAfter
-				}) {
+            deployments(first: ${this.#deploymentsPageSize}, after: ${this.#deploymentsContinueAfter}) {
                 ${this.#count_nodes ? "totalCount" : ""}
 
                 pageInfo {
@@ -963,7 +963,6 @@ export class Repository extends FetcherExtended {
                 nodes {
                     updatedAt
                     createdAt
-                    updatedAt
                     description
                     environment
                     task
@@ -976,6 +975,7 @@ export class Repository extends FetcherExtended {
                         state
                         deployment {
                             createdAt
+							updatedAt
                             description
                             commit {
                                 additions
@@ -1007,6 +1007,7 @@ export class Repository extends FetcherExtended {
                             state
                             deployment {
                                 createdAt
+								updatedAt
                                 description
                                 commit {
                                     additions
@@ -1210,6 +1211,78 @@ export class Repository extends FetcherExtended {
 
 				nodes {
 					${UserBodyEssential()}
+				}
+			}
+			`;
+		}
+
+		return "";
+	}
+
+	#contributionsBody() {
+		if (this.#doFetchContributions) {
+			if (this.#log) console.info("fetching contributions");
+
+			return `
+			defaultBranchRef {
+				target {
+					... on Commit {
+                		history(first: ${this.#contributionsPageSize}, after: ${this.#contributionsContinueAfter}) {
+							${this.#count_nodes ? "totalCount" : ""}
+
+							pageInfo {
+								endCursor
+								hasNextPage
+							}
+
+							edges {
+								node {
+									... on Commit {
+										abbreviatedOid
+										oid
+										id
+										
+										messageHeadlineHTML
+										messageBodyHTML
+										
+										additions
+										deletions
+										changedFilesIfAvailable
+										
+										commitUrl
+										treeUrl
+										
+										committedDate
+
+										deployments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}, after: null) {
+											totalCount
+
+											pageInfo {
+												endCursor
+												hasNextPage
+											}
+											
+											nodes {
+												createdAt
+												updatedAt
+												
+												description
+												
+												latestStatus {
+													createdAt
+													updatedAt
+													state
+													description
+													environmentUrl
+													logUrl
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 			`;

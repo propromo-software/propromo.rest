@@ -35,8 +35,8 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 	.use(
 		swagger({
 			/* Stable: 1.17.16 */
-			/* Modern UI: 1.25.25 */
-			scalarVersion: "1.25.58",
+			/* Modern UI: 1.25.25, 1.25.58 */
+			scalarVersion: "1.25.68", // https://github.com/scalar/scalar/issues/3956
 			path: SWAGGER_PATH,
 			exclude: [
 				...ROOT_PATHS,
@@ -49,7 +49,7 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 					title: "Propromo RestAPI Documentation",
 					description:
 						"A RestAPI for the scopes of the Github GraphqlAPI, that Propromo needs (latest).",
-					version: "1.1.0",
+					version: "1.2.0",
 				},
 				tags: [
 					{

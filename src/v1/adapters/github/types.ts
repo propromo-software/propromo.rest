@@ -36,7 +36,7 @@ export interface RestResponse<T> {
 	type?: string | undefined;
 }
 
-export interface GraphqlResponse<T> extends RestResponse<T> {}
+export interface GraphqlResponse<T> extends RestResponse<T> { }
 
 // in type GraphQlQueryResponse<ResponseData> of @octokit/graphql (has string as type...)
 export enum GraphqlResponseErrorCode {
@@ -89,6 +89,7 @@ export enum GITHUB_REPOSITORY_SCOPES {
 	MILESTONES = "milestones",
 	ISSUES = "issues",
 	COLLABORATORS = "collaborators",
+	CONTRIBUTIONS = "contributions",
 }
 
 export enum GITHUB_MILESTONE_ISSUE_STATES {

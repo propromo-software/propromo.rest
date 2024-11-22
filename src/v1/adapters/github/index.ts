@@ -1018,7 +1018,55 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																tags: ["github"],
 															},
 														},
-													),
+													)
+													.get(
+														"/contributions",
+														async ({
+															fetchParams,
+															params: { login_name, project_id_or_name },
+															query,
+															set,
+														}) => {
+															const response =
+																await fetchGithubDataUsingGraphql<{
+																	project: ProjectV2;
+																}>(
+																	AccountScopeEntryRoot(
+																		login_name,
+																		getAllRepositoriesInProject(
+																			project_id_or_name,
+																			[
+																				GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED,
+																			],
+																			[
+																				{
+																					scopeName: GITHUB_REPOSITORY_SCOPES.CONTRIBUTIONS,
+																					pageSize: query.pageSize ?? 1,
+																					continueAfter: query.continueAfter?.replaceAll("+", " "), // TODO: make this global (not sure, if only commits can have spaces in page hashes)
+																				},
+																				{
+																					scopeName: GITHUB_REPOSITORY_SCOPES.COUNT,
+																					pageSize: query.rootPageSize ?? 1,
+																					continueAfter: query.rootContinueAfter,
+																				},
+																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
+																		),
+																		login_type,
+																	),
+																	fetchParams.auth,
+																	set,
+																	fetchParams.auth_type,
+																);
+
+															return response;
+														},
+														{
+															detail: {
+																description: `Request repository contributions in the ${login_type} project.`,
+																tags: ["github"],
+															}
+														}
+													)
 										)
 
 										/**
