@@ -17,7 +17,6 @@ abstract class AccountFetcher extends Fetcher {
 		packagesContinueAfter: string | undefined | null,
 		count_nodes = false,
 	) {
-		// files(first: 10)
 		return `
         packages(first: ${packagePageSize}, after: ${packagesContinueAfter}) {
             ${count_nodes ? "totalCount" : ""}
@@ -366,7 +365,6 @@ export class UserFetcher extends FetcherExtended {
 	}
 
 	#infoBody() {
-		// socialAccounts(first: 10)
 		if (this.#doFetchInfo) {
 			if (this.#log) console.info("fetching info");
 
@@ -883,7 +881,6 @@ export class Repository extends FetcherExtended {
 	}
 
 	#releasesBody() {
-		// releaseAssets(first: 100)
 		if (this.#doFetchReleases) {
 			if (this.#log) console.info("fetching releases");
 
@@ -947,7 +944,6 @@ export class Repository extends FetcherExtended {
 	}
 
 	#deploymentsBody() {
-		// statuses(first: 3)
 		if (this.#doFetchDeployments) {
 			if (this.#log) console.info("fetching deployments");
 
@@ -990,39 +986,6 @@ export class Repository extends FetcherExtended {
                             }
                         }
                     }
-                    statuses(first: 3) {
-                        ${this.#count_nodes ? "totalCount" : ""}
-
-                        pageInfo {
-                            endCursor
-                            hasNextPage
-                        }
-
-                        nodes {
-                            createdAt
-                            updatedAt
-                            description
-                            logUrl
-                            environmentUrl
-                            state
-                            deployment {
-                                createdAt
-								updatedAt
-                                description
-                                commit {
-                                    additions
-                                    deletions
-                                    authoredDate
-                                    changedFilesIfAvailable
-                                    author {
-                                        avatarUrl
-                                        email
-                                        name
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
             `;
@@ -1030,6 +993,42 @@ export class Repository extends FetcherExtended {
 
 		return "";
 	}
+
+	/* 
+						statuses(first: 3) {
+						${this.#count_nodes ? "totalCount" : ""}
+
+						pageInfo {
+							endCursor
+							hasNextPage
+						}
+
+						nodes {
+							createdAt
+							updatedAt
+							description
+							logUrl
+							environmentUrl
+							state
+							deployment {
+								createdAt
+								updatedAt
+								description
+								commit {
+									additions
+									deletions
+									authoredDate
+									changedFilesIfAvailable
+									author {
+										avatarUrl
+										email
+										name
+									}
+								}
+							}
+						}
+					}
+	*/
 
 	#languagesBody() {
 		if (this.#doFetchLanguages) {
@@ -1153,7 +1152,6 @@ export class Repository extends FetcherExtended {
 	}
 
 	#issuesNodes() {
-		// labels(first: 4)
 		if (this.#doFetchIssues) {
 			return `
                 ${this.#count_nodes ? "totalCount" : ""}
@@ -1254,6 +1252,35 @@ export class Repository extends FetcherExtended {
 										
 										committedDate
 
+										authors(first: 3) {
+											${this.#count_nodes ? "totalCount" : ""}
+
+											pageInfo {
+												endCursor
+												hasNextPage
+											}
+
+											nodes {
+												name
+												avatarUrl
+												email
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			`;
+		}
+
+		return "";
+	}
+}
+
+/*
 										deployments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}, after: null) {
 											totalCount
 
@@ -1278,16 +1305,4 @@ export class Repository extends FetcherExtended {
 												}
 											}
 										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			`;
-		}
-
-		return "";
-	}
-}
+*/
