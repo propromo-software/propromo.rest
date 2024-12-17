@@ -35,8 +35,8 @@ export const v1 = new Elysia({ prefix: `/${V1_PATH}` })
 	.use(
 		swagger({
 			/* Stable: 1.17.16 */
-			/* Modern UI: 1.25.25, 1.25.58 */
-			scalarVersion: "1.25.68", // https://github.com/scalar/scalar/issues/3956
+			/* Modern UI: 1.25.25, 1.25.58, 1.25.68 */
+			scalarVersion: "1.25.83", // https://github.com/scalar/scalar/issues/3956
 			path: SWAGGER_PATH,
 			exclude: [
 				...ROOT_PATHS,
