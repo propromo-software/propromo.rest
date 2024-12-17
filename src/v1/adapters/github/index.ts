@@ -13,10 +13,11 @@ import {
 } from "./graphql";
 import { fetchGithubDataUsingGraphql, fetchRateLimit } from "./functions/fetch";
 import { createPinoLogger } from "@bogeychan/elysia-logger";
-import { RESOLVE_JWT } from "./functions/authenticate";
+import { getOctokitObject, RESOLVE_JWT } from "./functions/authenticate";
 import { guardEndpoints } from "../plugins";
 import {
 	GITHUB_ACCOUNT_SCOPES,
+	GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,
 	GITHUB_MILESTONE_ISSUE_STATES,
 	GITHUB_PROJECT_SCOPES,
 	GITHUB_REPOSITORY_SCOPES,
@@ -31,6 +32,9 @@ import {
 import { OrganizationFetcher, Repository, UserFetcher } from "./scopes";
 import { parseScopes } from "./functions/parse";
 import { maybeStringToNumber } from "../parse";
+import type { ProjectsV2ItemEvent, WebhookEventMap } from "@octokit/webhooks-types";
+import { handleProjectItemChange } from "./functions/mutations";
+import { DEV_MODE } from "../../../environment";
 
 const log = createPinoLogger();
 // TODO: write tests for all endpoints
@@ -39,25 +43,81 @@ const log = createPinoLogger();
 
 /**
  * Receives a webhook event of the changes that happened in the scopes that this microservice is subscribed to, on the GitHub-App installation.
+ * 
+ * Needs `issues: write` for extended functionality. (Automatically creating labels and adding them to issues.)
  */
 export const GITHUB_APP_WEBHOOKS = new Elysia({ prefix: "/webhooks" }).post(
 	"",
 	async (ctx) => {
-		// TODO: notify the frontend about the changes
+		const child = log.child(ctx);
+        if (DEV_MODE) child.info("webhook received");
+		
+		const eventType = ctx.headers["x-github-event"] as keyof WebhookEventMap;
+		
+		if (eventType === "projects_v2_item") {
+			if (DEV_MODE) log.info("projects_v2_item webhook received");
 
-		const child = log.child({
-			payload: ctx.body,
-		});
-		child.info(ctx, "webhook received");
+			const payload = ctx.body as ProjectsV2ItemEvent;
+			
+			if (
+				payload.action === "edited" && 
+				payload.changes?.field_value?.field_type === "iteration" &&
+				payload.changes.field_value.field_node_id &&
+				payload.installation?.id
+			) {
+				const octokit = await getOctokitObject(
+					GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP,
+						payload.installation.id,
+						ctx.set
+				);
+
+				const fieldValue = await octokit.graphql(`
+					query($nodeId: ID!) {
+						node(id: $nodeId) {
+							... on ProjectV2Item {
+								fieldValueByName(name: "Sprint") {
+									... on ProjectV2ItemFieldIterationValue {
+										title
+									}
+								}
+							}
+						}
+					}
+				`, {
+					nodeId: payload.projects_v2_item.node_id
+				});
+
+				if (DEV_MODE) child.info({ fieldValue }, '[Sprint Field Value]');
+
+				const result = await handleProjectItemChange(octokit, {
+					id: payload.projects_v2_item.node_id,
+					content: { 
+						id: payload.projects_v2_item.content_node_id
+					},
+					fieldValues: {
+						nodes: [{
+							field: { 
+								name: "Sprint"
+							},
+							value: fieldValue.node.fieldValueByName?.title || null
+						}]
+					},
+				});
+				
+				if (DEV_MODE) child.info({ result }, '[Sprint Label Mutation]');
+			}
+		}
+
+		// TODO: notify the frontend about the changes
 
 		return ctx.body;
 	},
 	{
-		detail: {
-			description:
-				"Receives a webhook event of the changes that happened in the scopes that this microservice is subscribed to, on your GitHub-App installation.",
-			tags: ["github", "webhooks"],
-		},
+			detail: {
+				description:
+					"Receives a webhook event of the changes that happened in the scopes that this microservice is subscribed to, on your GitHub-App installation.",
+				tags: ["github", "webhooks"],
+			},
 	},
 );
 
@@ -1155,40 +1215,41 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																set,
 															);
 
-														const response = await fetchGithubDataUsingGraphql<{
-															project: ProjectV2;
-														}>(
-															AccountScopeEntryRoot(
-																login_name,
-																getAllRepositoriesInProject(
-																	project_id_or_name,
-																	[GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED],
-																	[
-																		{
-																			scopeName: "milestones",
-																			pageSize: query.milestonesPageSize ?? 1,
-																			continueAfter:
-																				query.milestonesContinueAfter,
-																		},
-																		{
-																			scopeName: "issues",
-																			pageSize: query.issuesPageSize ?? 1,
-																			continueAfter: query.issuesContinueAfter,
-																		},
-																		{
-																			scopeName: "count",
-																			pageSize: query.rootPageSize ?? 1,
-																			continueAfter: query.rootContinueAfter,
-																		},
-																	] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
-																	issues_states,
+														const response =
+															await fetchGithubDataUsingGraphql<{
+																project: ProjectV2;
+															}>(
+																AccountScopeEntryRoot(
+																	login_name,
+																	getAllRepositoriesInProject(
+																		project_id_or_name,
+																		[GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED],
+																		[
+																			{
+																				scopeName: "milestones",
+																				pageSize: query.milestonesPageSize ?? 1,
+																				continueAfter:
+																					query.milestonesContinueAfter,
+																			},
+																			{
+																				scopeName: "issues",
+																				pageSize: query.issuesPageSize ?? 1,
+																				continueAfter: query.issuesContinueAfter,
+																			},
+																			{
+																				scopeName: "count",
+																				pageSize: query.rootPageSize ?? 1,
+																				continueAfter: query.rootContinueAfter,
+																			},
+																		] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
+																		issues_states,
+																	),
+																	login_type,
 																),
-																login_type,
-															),
-															fetchParams.auth,
-															set,
-															fetchParams.auth_type,
-														);
+																fetchParams.auth,
+																set,
+																fetchParams.auth_type,
+															);
 
 														return response;
 													},
@@ -1389,7 +1450,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																		},
 																	},
 																),
-													),
+														),
 												),
 										),
 								),
