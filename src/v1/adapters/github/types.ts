@@ -51,6 +51,11 @@ export interface PageSize<T> {
 	continueAfter?: string | undefined | null;
 }
 
+export interface IssueFilters {
+	labels?: string[];
+	states?: GITHUB_MILESTONE_ISSUE_STATES[] | null;
+}
+
 export enum GRAMMATICAL_NUMBER {
 	SINGULAR = 1,
 	PLURAL = 0,

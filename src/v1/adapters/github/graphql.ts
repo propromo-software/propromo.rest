@@ -71,6 +71,7 @@ export const Project = (
  * @param {GITHUB_MILESTONE_ISSUE_STATES[] | null} issues_states - The states of the milestone issues.
  * @param {GRAMMATICAL_NUMBER} [milestones_amount=GRAMMATICAL_NUMBER.PLURAL] - The amount of milestones.
  * @param {number | null} [milestone_number=null] - The number of the milestone.
+ * @param {string[]} [labels] - The labels of the issues.
  * @return {unknown} The result of the function.
  */
 export const getAllRepositoriesInProject = (
@@ -80,6 +81,7 @@ export const getAllRepositoriesInProject = (
 	issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null,
 	milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
 	milestone_number: number | null = null,
+	labels?: string[],
 ) => {
 	const repository = new Repository({
 		scopes: repository_scopes,
@@ -88,7 +90,7 @@ export const getAllRepositoriesInProject = (
 	return Project(
 		project_name,
 		project_scopes,
-		repository.getQuery(issues_states, milestones_amount, milestone_number),
+		repository.getQuery(issues_states, milestones_amount, milestone_number, labels),
 	);
 };
 

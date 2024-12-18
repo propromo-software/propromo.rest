@@ -3,6 +3,7 @@ import {
 	GITHUB_MILESTONE_ISSUE_STATES,
 	GITHUB_REPOSITORY_SCOPES,
 	GRAMMATICAL_NUMBER,
+	IssueFilters,
 	type PageSize,
 } from "./types";
 import { DEV_MODE } from "../../../environment";
@@ -583,6 +584,7 @@ export class Repository extends FetcherExtended {
 		issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null,
 		milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
 		milestone_number: number | null = null,
+		labels?: IssueFilters["labels"],
 	) {
 		const final_issue_states = issues_states ?? [
 			GITHUB_MILESTONE_ISSUE_STATES.OPEN,
@@ -597,6 +599,7 @@ export class Repository extends FetcherExtended {
 				final_issue_states,
 				milestones_amount,
 				milestone_number,
+				labels,
 			);
 		}
 
@@ -656,6 +659,7 @@ export class Repository extends FetcherExtended {
 		issues_states: GITHUB_MILESTONE_ISSUE_STATES[] | null = null,
 		milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
 		milestone_number: number | null = null,
+		labels?: string[]
 	) {
 		if (this.name) {
 			return `
@@ -674,7 +678,9 @@ export class Repository extends FetcherExtended {
                     ${this.#milestonesBody(
 				issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
 				milestones_amount,
-				milestone_number)}
+				milestone_number,
+				labels
+			)}
 
 					${this.#collaboratorsBody()}
 					${this.#contributionsBody()}
@@ -707,7 +713,9 @@ export class Repository extends FetcherExtended {
                 ${this.#milestonesBody(
 				issues_states ?? [GITHUB_MILESTONE_ISSUE_STATES.OPEN],
 				milestones_amount,
-				milestone_number)}
+				milestone_number,
+				labels
+			)}
 
 				${this.#collaboratorsBody()}
 				${this.#contributionsBody()}
@@ -1067,6 +1075,7 @@ export class Repository extends FetcherExtended {
 		issues_state: GITHUB_MILESTONE_ISSUE_STATES[],
 		milestones_amount: GRAMMATICAL_NUMBER = GRAMMATICAL_NUMBER.PLURAL,
 		milestone_number: number | null = null,
+		labels?: string[]
 	) {
 		const IS_SINGULAR = milestones_amount === GRAMMATICAL_NUMBER.SINGULAR;
 		const head =
@@ -1096,7 +1105,7 @@ export class Repository extends FetcherExtended {
 					? `
                     ${info_body}
 
-                    ${this.#issuesBody(issues_state)}
+                    ${this.#issuesBody(issues_state, labels)}
                     `
 					: `
                     ${this.#count_nodes ? "totalCount" : ""}
@@ -1109,7 +1118,7 @@ export class Repository extends FetcherExtended {
                     nodes {
                         ${info_body}
         
-                        ${this.#issuesBody(issues_state)}
+                        ${this.#issuesBody(issues_state, labels)}
                     }
                     `
 				}
@@ -1119,26 +1128,34 @@ export class Repository extends FetcherExtended {
 		if (this.#doFetchIssues) {
 			if (this.#log) console.info("fetching issues");
 
-			return this.#issuesBody(issues_state);
+			return this.#issuesBody(issues_state, labels);
 		}
 
 		return "";
 	}
 
-	#issuesBody(state: GITHUB_MILESTONE_ISSUE_STATES[]) {
+	#issuesBody(state: GITHUB_MILESTONE_ISSUE_STATES[], labels?: string[]) {
 		if (this.#doFetchIssues) {
 			const fetchOpen = state.includes(GITHUB_MILESTONE_ISSUE_STATES.OPEN);
 			const fetchClosed = state.includes(GITHUB_MILESTONE_ISSUE_STATES.CLOSED);
+			
+			const labelsFilter = labels && labels.length > 0 
+				? `, labels: [${labels.map(label => `"${label}"`).join(', ')}]`
+				: '';
 
 			const open = `
-                open_issues: issues(first: ${this.#issuesPageSize
-				}, states: [OPEN], after: ${this.#issuesContinueAfter}) {
+                open_issues: issues(first: ${this.#issuesPageSize}, 
+                    states: [OPEN]${labelsFilter}, 
+                    after: ${this.#issuesContinueAfter}
+                ) {
                     ${this.#issuesNodes()}
                 }`;
 
 			const closed = `
-                closed_issues: issues(first: ${this.#issuesPageSize
-				}, states: [CLOSED], after: ${this.#issuesContinueAfter}) {
+                closed_issues: issues(first: ${this.#issuesPageSize}, 
+                    states: [CLOSED]${labelsFilter}, 
+                    after: ${this.#issuesContinueAfter}
+                ) {
                     ${this.#issuesNodes()}
                 }`;
 

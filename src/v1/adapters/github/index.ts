@@ -1011,10 +1011,13 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
-																					continueAfter:
-																						query.rootContinueAfter,
+																					continueAfter: query.rootContinueAfter,
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
+																			null,
+																			undefined,
+																			null,
+																			query.labels?.split(','),
 																		),
 																		login_type,
 																	),
@@ -1026,8 +1029,21 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 															return response;
 														},
 														{
+															query: t.Object({
+																rootPageSize: t.Optional(
+																	t.Numeric({ minimum: 1, maximum: 100 }),
+																),
+																rootContinueAfter: t.Optional(
+																	t.MaybeEmpty(t.String()),
+																),
+																pageSize: t.Optional(
+																	t.Numeric({ minimum: 1, maximum: 100 }),
+																),
+																continueAfter: t.Optional(t.MaybeEmpty(t.String())),
+																labels: t.Optional(t.String()),
+															}),
 															detail: {
-																description: `Request repository issues in the ${login_type} project.`,
+																description: `Request repository issues in the ${login_type} project. Filter by labels with: labels=sprint-01,bug,feature`,
 																tags: ["github"],
 															},
 														},
@@ -1245,6 +1261,9 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																			},
 																		] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		issues_states,
+																		undefined,
+																		null,
+																		query.labels?.split(','),
 																	),
 																	login_type,
 																),
@@ -1276,9 +1295,10 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																t.MaybeEmpty(t.String()),
 															),
 															issues_states: t.Optional(t.String()), // enum arrays can not be passed directly in query params, that is why this parameter is validated in the callback
+															labels: t.Optional(t.String()),
 														}),
 														detail: {
-															description: `Request repository milestones issues in the ${login_type} project.`,
+															description: `Request repository milestones issues in the ${login_type} project. Filter by labels with: labels=sprint-01,bug,feature`,
 															tags: ["github"],
 														},
 													},
@@ -1414,6 +1434,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																						issues_states,
 																						GRAMMATICAL_NUMBER.SINGULAR,
 																						milestone_id,
+																						query.labels?.split(','),
 																					),
 																					login_type,
 																				),
@@ -1445,9 +1466,12 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				t.MaybeEmpty(t.String()),
 																			),
 																			issues_states: t.Optional(t.String()), // enum arrays can not be passed directly in query params, that is why this parameter is validated in the callback
+																			labels: t.Optional(t.String()),
 																		}),
 																		detail: {
-																			description: `Request repository milestone issues in the ${login_type} project. (issues_states=open,closed || issues_states=open || issues_states=closed)`,
+																			description: `Request repository milestone issues in the ${login_type} project. 
+																			(issues_states=open,closed || issues_states=open || issues_states=closed)
+																			Filter by labels with: labels=sprint-01,bug,feature`,
 																			tags: ["github"],
 																		},
 																	},
