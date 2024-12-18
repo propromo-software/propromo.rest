@@ -60,7 +60,9 @@ export const GITHUB_APP_WEBHOOKS = new Elysia({ prefix: "/webhooks" }).post(
 			const payload = ctx.body as ProjectsV2ItemEvent;
 			
 			if (
-				payload.action === "edited" && 
+				(payload.action === "edited" || payload.action === "created" || payload.action === "converted" || payload.action === "restored") && 
+				"changes" in payload &&
+				"field_value" in payload.changes &&
 				payload.changes?.field_value?.field_type === "iteration" &&
 				payload.changes.field_value.field_node_id &&
 				payload.installation?.id
