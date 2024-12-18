@@ -1,10 +1,11 @@
-import { Repository } from "./scopes";
+import { Iteration, Repository } from "./scopes";
 import {
 	type GITHUB_REPOSITORY_SCOPES,
 	GITHUB_PROJECT_SCOPES,
 	type PageSize,
 	GRAMMATICAL_NUMBER,
 	type GITHUB_MILESTONE_ISSUE_STATES,
+	GITHUB_ITERATION_SCOPES,
 } from "./types";
 import { DEV_MODE } from "../../../environment";
 
@@ -24,7 +25,7 @@ export const GITHUB_QUOTA = `{
 export const Project = (
 	project_name: string | number,
 	project_scopes: GITHUB_PROJECT_SCOPES[],
-	repository_query: string | null = null,
+	child_query: string | null = null
 ) => {
 	const name_is_text = typeof project_name === "string";
 	const head = name_is_text
@@ -47,9 +48,10 @@ export const Project = (
         readme
         ` : ""}
         
-        ${project_scopes.includes(GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED) &&
-			repository_query
-			? repository_query
+        ${(project_scopes.includes(GITHUB_PROJECT_SCOPES.REPOSITORIES_LINKED) ||
+			project_scopes.includes(GITHUB_PROJECT_SCOPES.ITERATIONS)) &&
+			child_query
+			? child_query
 			: ""
 		}
 
@@ -119,4 +121,32 @@ export const AccountScopeEntryRoot = (
 	console.log(query);
 
 	return query;
+};
+
+/**
+ * Retrieves the iterations of a project.
+ *
+ * @param {string | number} project_name - The name or ID of the project.
+ * @param {number} [pageSize=100] - The amount of iterations to fetch at once.
+ * @param {string | null} [continueAfter=null] - The cursor to continue after.
+ * @param {string} [iterationFieldName="Sprint"] - The name of the iteration field.
+ * @param {GITHUB_ITERATION_SCOPES[]} [scopes=[GITHUB_ITERATION_SCOPES.INFO]] - The scopes of the iterations.
+ *
+ * @return {string} The generated GraphQL query.
+ */
+export const getProjectIterationIssues = (
+	project_name: string | number,
+	pageSize: number = 100,
+	continueAfter: string | null = null,
+	iterationFieldName: string = "Sprint",
+	scopes: GITHUB_ITERATION_SCOPES[] = [GITHUB_ITERATION_SCOPES.INFO]
+) => {
+	const iteration = new Iteration({
+		pageSize,
+		continueAfter,
+		iterationFieldName,
+		scopes
+	});
+
+	return Project(project_name, [GITHUB_PROJECT_SCOPES.ITERATIONS], iteration.getQuery());
 };

@@ -1,5 +1,6 @@
 import {
 	GITHUB_ACCOUNT_SCOPES,
+	GITHUB_ITERATION_SCOPES,
 	GITHUB_PROJECT_SCOPES,
 	GITHUB_REPOSITORY_SCOPES,
 } from "./types";
@@ -12,4 +13,7 @@ export const GITHUB_PROJECT_PARAMS = JSON.stringify(
 );
 export const GITHUB_REPOSITORY_PARAMS = JSON.stringify(
 	Object.values(GITHUB_REPOSITORY_SCOPES),
+);
+export const GITHUB_ITERATION_PARAMS = JSON.stringify(
+	Object.values(GITHUB_ITERATION_SCOPES),
 );

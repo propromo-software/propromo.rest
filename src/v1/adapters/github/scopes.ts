@@ -5,6 +5,7 @@ import {
 	GRAMMATICAL_NUMBER,
 	IssueFilters,
 	type PageSize,
+	GITHUB_ITERATION_SCOPES,
 } from "./types";
 import { DEV_MODE } from "../../../environment";
 import { Fetcher, FetcherExtended } from "../scopes";
@@ -474,7 +475,7 @@ export class Repository extends FetcherExtended {
 			| { name: string; scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] }
 			| { scopes: PageSize<GITHUB_REPOSITORY_SCOPES>[] },
 	) {
-		super(("name" in args) ? args.name : null);
+		super("name" in args && args.name ? args.name : null);
 
 		this.#log = DEV_MODE
 
@@ -1003,7 +1004,7 @@ export class Repository extends FetcherExtended {
 	}
 
 	/* 
-						statuses(first: 3) {
+					statuses(first: 3) {
 						${this.#count_nodes ? "totalCount" : ""}
 
 						pageInfo {
@@ -1138,8 +1139,8 @@ export class Repository extends FetcherExtended {
 		if (this.#doFetchIssues) {
 			const fetchOpen = state.includes(GITHUB_MILESTONE_ISSUE_STATES.OPEN);
 			const fetchClosed = state.includes(GITHUB_MILESTONE_ISSUE_STATES.CLOSED);
-			
-			const labelsFilter = labels && labels.length > 0 
+
+			const labelsFilter = labels && labels.length > 0
 				? `, labels: [${labels.map(label => `"${label}"`).join(', ')}]`
 				: '';
 
@@ -1297,29 +1298,122 @@ export class Repository extends FetcherExtended {
 	}
 }
 
-/*
-										deployments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}, after: null) {
-											totalCount
+export class Iteration extends FetcherExtended {
+	#doFetchInfo = false;
+	#doFetchAssignees = false;
+	#doFetchLabels = false;
 
-											pageInfo {
-												endCursor
-												hasNextPage
-											}
-											
-											nodes {
-												createdAt
-												updatedAt
-												
-												description
-												
-												latestStatus {
-													createdAt
-													updatedAt
-													state
-													description
-													environmentUrl
-													logUrl
-												}
-											}
-										}
-*/
+	#pageSize: number = Iteration.defaultPageSize;
+	#continueAfter: string | null = null;
+	#iterationFieldName: string;
+
+	#count_nodes = false;
+	#log = false;
+
+	constructor(
+		args:
+			| {
+				name?: string;
+				pageSize?: number;
+				continueAfter?: string | null;
+				iterationFieldName?: string;
+				scopes?: GITHUB_ITERATION_SCOPES[];
+			}
+			| { pageSize?: number; continueAfter?: string | null; iterationFieldName?: string; scopes?: GITHUB_ITERATION_SCOPES[] }
+	) {
+		super("name" in args && args.name ? args.name : null);
+		this.#log = DEV_MODE;
+		this.#pageSize = args.pageSize ?? Iteration.defaultPageSize;
+		this.#continueAfter = args.continueAfter ?? null;
+		this.#iterationFieldName = args.iterationFieldName ?? "Sprint";
+
+		if (this.#log) console.info("parsing scopes");
+		this.#parseScopes(args.scopes ?? [GITHUB_ITERATION_SCOPES.INFO]);
+	}
+
+	#parseScopes(scopes: GITHUB_ITERATION_SCOPES[]) {
+		for (const scope of scopes) {
+			switch (scope) {
+				case GITHUB_ITERATION_SCOPES.INFO:
+					this.#doFetchInfo = true;
+					break;
+				case GITHUB_ITERATION_SCOPES.ASSIGNEES:
+					this.#doFetchAssignees = true;
+					break;
+				case GITHUB_ITERATION_SCOPES.LABELS:
+					this.#doFetchLabels = true;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	getQuery() {
+		if (this.#log) console.info("getting query");
+
+		return `
+			items(first: ${this.#pageSize}, after: "${this.#continueAfter}") {
+				totalCount
+
+				pageInfo {
+					hasNextPage
+					endCursor
+				}
+
+				nodes {
+					content {
+						... on Issue {
+							title
+							body
+							bodyUrl
+							url
+							createdAt
+							updatedAt
+							closedAt
+							state
+
+							${this.#doFetchInfo ? `
+							lastEditedAt
+							` : ''}
+
+							${this.#doFetchLabels ? `
+							labels(first: 4) {
+								${this.#count_nodes ? "totalCount" : ""}
+
+								nodes {
+									url
+									name
+									color
+									createdAt
+									updatedAt
+									description
+									isDefault
+								}
+							}` : ''}
+
+							${this.#doFetchAssignees ? `
+							assignees(first: 10) {
+								${this.#count_nodes ? "totalCount" : ""}
+
+								nodes {
+									login
+									name
+									email
+								}
+							}` : ''}
+						}
+					}
+
+					iteration: fieldValueByName(name: "${this.#iterationFieldName}") {
+						... on ProjectV2ItemFieldIterationValue {
+							title
+							duration
+							startDate
+						}
+					}
+				}
+			}
+		`;
+	}
+}

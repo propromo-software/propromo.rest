@@ -78,6 +78,7 @@ export enum GITHUB_ACCOUNT_SCOPES {
 export enum GITHUB_PROJECT_SCOPES {
 	INFO = "info",
 	REPOSITORIES_LINKED = "repositories",
+	ITERATIONS = "iterations",
 }
 
 export enum GITHUB_REPOSITORY_SCOPES {
@@ -100,4 +101,10 @@ export enum GITHUB_REPOSITORY_SCOPES {
 export enum GITHUB_MILESTONE_ISSUE_STATES {
 	OPEN = "open",
 	CLOSED = "closed",
+}
+
+export enum GITHUB_ITERATION_SCOPES {
+	INFO = "info",
+	ASSIGNEES = "assignees",
+	LABELS = "labels",
 }

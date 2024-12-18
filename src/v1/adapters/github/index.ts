@@ -10,6 +10,7 @@ import {
 	GITHUB_QUOTA,
 	Project,
 	getAllRepositoriesInProject,
+	getProjectIterationIssues,
 } from "./graphql";
 import { fetchGithubDataUsingGraphql, fetchRateLimit } from "./functions/fetch";
 import { createPinoLogger } from "@bogeychan/elysia-logger";
@@ -18,6 +19,7 @@ import { guardEndpoints } from "../plugins";
 import {
 	GITHUB_ACCOUNT_SCOPES,
 	GITHUB_AUTHENTICATION_STRATEGY_OPTIONS,
+	GITHUB_ITERATION_SCOPES,
 	GITHUB_MILESTONE_ISSUE_STATES,
 	GITHUB_PROJECT_SCOPES,
 	GITHUB_REPOSITORY_SCOPES,
@@ -26,6 +28,7 @@ import {
 } from "../github/types";
 import {
 	GITHUB_ACCOUNT_PARAMS,
+	GITHUB_ITERATION_PARAMS,
 	GITHUB_PROJECT_PARAMS,
 	GITHUB_REPOSITORY_PARAMS,
 } from "./params";
@@ -50,17 +53,17 @@ export const GITHUB_APP_WEBHOOKS = new Elysia({ prefix: "/webhooks" }).post(
 	"",
 	async (ctx) => {
 		const child = log.child(ctx);
-        if (DEV_MODE) child.info("webhook received");
-		
+		if (DEV_MODE) child.info("webhook received");
+
 		const eventType = ctx.headers["x-github-event"] as keyof WebhookEventMap;
-		
+
 		if (eventType === "projects_v2_item") {
 			if (DEV_MODE) log.info("projects_v2_item webhook received");
 
 			const payload = ctx.body as ProjectsV2ItemEvent;
-			
+
 			if (
-				(payload.action === "edited" || payload.action === "created" || payload.action === "converted" || payload.action === "restored") && 
+				(payload.action === "edited" || payload.action === "created" || payload.action === "converted" || payload.action === "restored") &&
 				"changes" in payload &&
 				"field_value" in payload.changes &&
 				payload.changes?.field_value?.field_type === "iteration" &&
@@ -69,8 +72,8 @@ export const GITHUB_APP_WEBHOOKS = new Elysia({ prefix: "/webhooks" }).post(
 			) {
 				const octokit = await getOctokitObject(
 					GITHUB_AUTHENTICATION_STRATEGY_OPTIONS.APP,
-						payload.installation.id,
-						ctx.set
+					payload.installation.id,
+					ctx.set
 				);
 
 				const fieldValue = await octokit.graphql(`
@@ -93,19 +96,19 @@ export const GITHUB_APP_WEBHOOKS = new Elysia({ prefix: "/webhooks" }).post(
 
 				const result = await handleProjectItemChange(octokit, {
 					id: payload.projects_v2_item.node_id,
-					content: { 
+					content: {
 						id: payload.projects_v2_item.content_node_id
 					},
 					fieldValues: {
 						nodes: [{
-							field: { 
+							field: {
 								name: "Sprint"
 							},
 							value: fieldValue.node.fieldValueByName?.title || null
 						}]
 					},
 				});
-				
+
 				if (DEV_MODE) child.info({ result }, '[Sprint Label Mutation]');
 			}
 		}
@@ -115,11 +118,11 @@ export const GITHUB_APP_WEBHOOKS = new Elysia({ prefix: "/webhooks" }).post(
 		return ctx.body;
 	},
 	{
-			detail: {
-				description:
-					"Receives a webhook event of the changes that happened in the scopes that this microservice is subscribed to, on your GitHub-App installation.",
-				tags: ["github", "webhooks"],
-			},
+		detail: {
+			description:
+				"Receives a webhook event of the changes that happened in the scopes that this microservice is subscribed to, on your GitHub-App installation.",
+			tags: ["github", "webhooks"],
+		},
 	},
 );
 
@@ -423,6 +426,65 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 										detail: {
 											description: `Request anything in the ${login_type} project (info and repositories).  
                             Allowed scopes for the account level: ${GITHUB_ACCOUNT_PARAMS}.`,
+											tags: ["github"],
+										},
+									},
+								)
+
+								/**
+								 * Request project iteration issues
+								 */
+								.get(
+									"/iterations/issues",
+									async ({ fetchParams, params: { login_name, project_id_or_name }, query, set }) => {
+										const response = await fetchGithubDataUsingGraphql<{
+											organization?: { projectV2: ProjectV2 };
+											user?: { projectV2: ProjectV2 };
+										}>(
+											AccountScopeEntryRoot(
+												login_name,
+												getProjectIterationIssues(
+													project_id_or_name,
+													query.pageSize,
+													query.continueAfter,
+													query.iterationFieldName,
+													(query.scopes?.split(",") ?? []) as GITHUB_ITERATION_SCOPES[]
+												),
+												login_type
+											),
+											fetchParams.auth,
+											set,
+											fetchParams.auth_type,
+										);
+
+										const user = FETCH_PROJECTS_FROM_ORGANIZATION ? "organization" : "user";
+										if (response?.data && user in response.data && response.data[user]?.projectV2) {
+											const items = response.data[user].projectV2.items;
+											// Property 'state' does not exist on type 'DraftIssue | Issue | PullRequest'. -> This is not typed correctly...
+											// @ts-ignore
+											const openNodes = items?.nodes?.filter(node => node?.content?.state === 'OPEN') ?? [];
+											// @ts-ignore
+											const closedNodes = items?.nodes?.filter(node => node?.content?.state === 'CLOSED') ?? [];
+
+											response.data[user].projectV2.items = {
+												totalCount: items.totalCount,
+												pageInfo: items.pageInfo,
+												open_issues: { nodes: openNodes },
+												closed_issues: { nodes: closedNodes }
+											} as any;
+										}
+
+										return response;
+									},
+									{
+										query: t.Object({
+											pageSize: t.Optional(t.Numeric({ minimum: 1, maximum: 100 })),
+											continueAfter: t.Optional(t.String()),
+											iterationFieldName: t.Optional(t.String()),
+											scopes: t.Optional(t.String()) // t.Optional(t.Array(t.Enum(GITHUB_ITERATION_SCOPES)))
+										}),
+										detail: {
+											description: `Request project iteration issues for ${login_type}. Scopes: ${GITHUB_ITERATION_PARAMS} (/projects/{project_id}/iteration/issues?iteration_field_name=Sprint).`,
 											tags: ["github"],
 										},
 									},
@@ -1476,7 +1538,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																		},
 																	},
 																),
-														),
+													),
 												),
 										),
 								),
