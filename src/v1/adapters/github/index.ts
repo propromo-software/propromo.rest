@@ -42,6 +42,16 @@ import { DEV_MODE } from "../../../environment";
 const log = createPinoLogger();
 // TODO: write tests for all endpoints
 
+const sanitizeCursor = (cursor?: string | null): string | null => {
+	if (!cursor) return null;
+	try {
+		const decoded = decodeURIComponent(cursor);
+		return decoded.trim() === '' ? null : decoded;
+	} catch {
+		return null;
+	}
+};
+
 /* APP WEBHOOK */
 
 /**
@@ -260,7 +270,7 @@ const FETCH_PROJECTS_FROM_ORGANIZATION = new Elysia({ prefix: "" })
 					{
 						scopeName: GITHUB_ACCOUNT_SCOPES.PROJECTS,
 						pageSize: query.pageSize ?? 1,
-						continueAfter: query.continueAfter,
+						continueAfter: sanitizeCursor(query.continueAfter),
 					},
 				] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
 				fetchParams.auth,
@@ -291,7 +301,7 @@ const FETCH_PROJECTS_FROM_USER = new Elysia({ prefix: "" })
 					{
 						scopeName: GITHUB_ACCOUNT_SCOPES.PROJECTS,
 						pageSize: query.pageSize ?? 1,
-						continueAfter: query.continueAfter,
+						continueAfter: sanitizeCursor(query.continueAfter),
 					},
 				] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
 				fetchParams.auth,
@@ -446,7 +456,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 												getProjectIterationIssues(
 													project_id_or_name,
 													query.pageSize,
-													query.continueAfter,
+													sanitizeCursor(query.continueAfter),
 													query.iterationFieldName,
 													(query.scopes?.split(",") ?? []) as GITHUB_ITERATION_SCOPES[]
 												),
@@ -580,7 +590,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "count",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -623,7 +633,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "essential",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -666,7 +676,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "info",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -709,7 +719,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "license",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -774,13 +784,13 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "vulnerabilities",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
 																					continueAfter:
-																						query.rootContinueAfter,
+																						sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -823,13 +833,13 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "topics",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
 																					continueAfter:
-																						query.rootContinueAfter,
+																						sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -872,13 +882,13 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "labels",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
 																					continueAfter:
-																						query.rootContinueAfter,
+																						sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -921,13 +931,13 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "releases",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
 																					continueAfter:
-																						query.rootContinueAfter,
+																						sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -970,13 +980,13 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "deployments",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
 																					continueAfter:
-																						query.rootContinueAfter,
+																						sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -1019,13 +1029,13 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "languages",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
 																					continueAfter:
-																						query.rootContinueAfter,
+																						sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -1068,12 +1078,12 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "issues",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
-																					continueAfter: query.rootContinueAfter,
+																					continueAfter: sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																			null,
@@ -1133,13 +1143,13 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: "collaborators",
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter,
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: "count",
 																					pageSize: query.rootPageSize ?? 1,
 																					continueAfter:
-																						query.rootContinueAfter,
+																						sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -1182,12 +1192,12 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																				{
 																					scopeName: GITHUB_REPOSITORY_SCOPES.CONTRIBUTIONS,
 																					pageSize: query.pageSize ?? 1,
-																					continueAfter: query.continueAfter?.replaceAll("+", " "), // TODO: make this global (not sure, if only commits can have spaces in page hashes)
+																					continueAfter: sanitizeCursor(query.continueAfter),
 																				},
 																				{
 																					scopeName: GITHUB_REPOSITORY_SCOPES.COUNT,
 																					pageSize: query.rootPageSize ?? 1,
-																					continueAfter: query.rootContinueAfter,
+																					continueAfter: sanitizeCursor(query.rootContinueAfter),
 																				},
 																			] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		),
@@ -1237,12 +1247,12 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																		{
 																			scopeName: "milestones",
 																			pageSize: query.pageSize ?? 1,
-																			continueAfter: query.continueAfter,
+																			continueAfter: sanitizeCursor(query.continueAfter),
 																		},
 																		{
 																			scopeName: "count",
 																			pageSize: query.rootPageSize ?? 1,
-																			continueAfter: query.rootContinueAfter,
+																			continueAfter: sanitizeCursor(query.rootContinueAfter),
 																		},
 																	] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																),
@@ -1319,7 +1329,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																			{
 																				scopeName: "count",
 																				pageSize: query.rootPageSize ?? 1,
-																				continueAfter: query.rootContinueAfter,
+																				continueAfter: sanitizeCursor(query.rootContinueAfter),
 																			},
 																		] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																		issues_states,
@@ -1416,7 +1426,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																								scopeName: "count",
 																								pageSize: query.pageSize ?? 1,
 																								continueAfter:
-																									query.continueAfter,
+																									sanitizeCursor(query.continueAfter),
 																							},
 																						] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																						null,
@@ -1490,7 +1500,7 @@ const ACCOUNT_LEVEL_CHILDREN = (login_type: "organization" | "user") =>
 																								pageSize:
 																									query.rootPageSize ?? 1,
 																								continueAfter:
-																									query.rootContinueAfter,
+																									sanitizeCursor(query.rootContinueAfter),
 																							},
 																						] as PageSize<GITHUB_REPOSITORY_SCOPES>[],
 																						issues_states,
@@ -1705,7 +1715,7 @@ export const GITHUB_ORGS = new Elysia({ prefix: "/orgs" }).use(
 									{
 										scopeName: GITHUB_ACCOUNT_SCOPES.PACKAGES,
 										pageSize: query.pageSize ?? 1,
-										continueAfter: query.continueAfter,
+										continueAfter: sanitizeCursor(query.continueAfter),
 									},
 								] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
 								fetchParams.auth,
@@ -1836,7 +1846,7 @@ export const GITHUB_USERS = new Elysia({ prefix: "/users" }).use(
 									{
 										scopeName: GITHUB_ACCOUNT_SCOPES.PACKAGES,
 										pageSize: query.pageSize ?? 1,
-										continueAfter: query.continueAfter,
+										continueAfter: sanitizeCursor(query.continueAfter),
 									},
 								] as PageSize<GITHUB_ACCOUNT_SCOPES>[]).getQuery(),
 								fetchParams.auth,
