@@ -913,9 +913,6 @@ export class Repository extends FetcherExtended {
                     tagName
                     updatedAt
                     url
-                    tag {
-                        name
-                    }
                     tagCommit {
                         additions
                         deletions
